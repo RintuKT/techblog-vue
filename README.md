@@ -7,7 +7,8 @@ Internal engineering blog. Posts are Markdown files in this repo; the site is a 
 ```bash
 npm install
 npm run dev        # http://localhost:5180
-npm run build      # outputs dist/
+npm run check      # validates front matter, authors, categories, image URLs
+npm run build      # runs the check, then outputs dist/
 ```
 
 ## Write a post
@@ -28,7 +29,8 @@ npm run build      # outputs dist/
    | `draft` | no | `true` hides the post from the built site (still visible in `npm run dev`) |
 
 3. Write the body in Markdown. Tables and code blocks work. Images are remote URLs: upload the image to the usual bucket/CDN and reference it with `![caption](https://...)`. Nothing binary goes in this repo.
-4. Set `draft: false`, commit, push. Whatever rebuilds and serves `dist/` picks it up.
+4. Run `npm run check`. Titles or summaries containing `: ` must be wrapped in quotes.
+5. Set `draft: false`, commit, push. Whatever rebuilds and serves `dist/` picks it up.
 
 ## Add a release
 

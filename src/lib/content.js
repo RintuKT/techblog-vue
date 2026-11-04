@@ -15,10 +15,16 @@ export const categories = yaml.load(categoriesRaw) || {}
 
 export const md = new MarkdownIt({ html: false, linkify: true, typographer: true })
 
-export function splitFrontMatter(text) {
+export function splitFrontMatter(text, path = '') {
   const match = /^---\s*\n([\s\S]*?)\n---\s*\n?([\s\S]*)$/.exec(text)
   if (!match) return { meta: {}, body: text }
-  return { meta: yaml.load(match[1]) || {}, body: match[2] }
+  try {
+    return { meta: yaml.load(match[1]) || {}, body: match[2] }
+  } catch (err) {
+    // A broken front matter should break one post, not the whole site.
+    console.error(`Front matter error in ${path}: ${err.message}`)
+    return { meta: { title: `Front matter error: ${path.split('/').pop()}`, draft: true }, body: match[2] }
+  }
 }
 
 export function slugFromPath(path) {
@@ -46,7 +52,7 @@ export function initials(name) {
 
 export const posts = Object.entries(rawPosts)
   .map(([path, text]) => {
-    const { meta, body } = splitFrontMatter(text)
+    const { meta, body } = splitFrontMatter(text, path)
     const authorKey = meta.author || ''
     const author = authors[authorKey] || { name: authorKey || 'Unknown', role: '' }
     return {

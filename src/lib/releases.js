@@ -27,7 +27,7 @@ function normaliseImages(value) {
 
 export const releases = Object.entries(rawReleases)
   .map(([path, text]) => {
-    const { meta, body } = splitFrontMatter(text)
+    const { meta, body } = splitFrontMatter(text, path)
     const productKey = String(meta.product || '')
     const product = products[productKey] || { name: productKey || 'Unknown', short: productKey, kind: '' }
     const authorKey = meta.author || ''
