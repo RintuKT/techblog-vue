@@ -13,19 +13,19 @@ import categoriesRaw from '/content/categories.yaml?raw'
 export const authors = yaml.load(authorsRaw) || {}
 export const categories = yaml.load(categoriesRaw) || {}
 
-const md = new MarkdownIt({ html: false, linkify: true, typographer: true })
+export const md = new MarkdownIt({ html: false, linkify: true, typographer: true })
 
-function splitFrontMatter(text) {
+export function splitFrontMatter(text) {
   const match = /^---\s*\n([\s\S]*?)\n---\s*\n?([\s\S]*)$/.exec(text)
   if (!match) return { meta: {}, body: text }
   return { meta: yaml.load(match[1]) || {}, body: match[2] }
 }
 
-function slugFromPath(path) {
+export function slugFromPath(path) {
   return path.split('/').pop().replace(/\.md$/, '')
 }
 
-function toDateString(value) {
+export function toDateString(value) {
   if (value instanceof Date) return value.toISOString().slice(0, 10)
   return String(value || '')
 }

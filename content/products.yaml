@@ -1,0 +1,30 @@
+# Products / surfaces that ship releases. The key is what a release file's `product:` references.
+# Order here is the tab order on the Releases page.
+web:
+  name: Web app
+  short: Web
+  kind: Learner
+ios:
+  name: iOS app
+  short: iOS
+  kind: Learner
+android:
+  name: Android app
+  short: Android
+  kind: Learner
+staff:
+  name: Internal staff app
+  short: Staff
+  kind: Internal
+sales:
+  name: Sales dashboard
+  short: Sales
+  kind: Internal
+content:
+  name: Content dashboard
+  short: Content
+  kind: Internal
+studio:
+  name: Studio
+  short: Studio
+  kind: Internal

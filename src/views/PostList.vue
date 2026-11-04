@@ -4,6 +4,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { posts, usedAuthors, usedCategories, allTags, tagCounts, featuredPosts, formatDate } from '../lib/content.js'
 import PostCard from '../components/PostCard.vue'
 import Avatar from '../components/Avatar.vue'
+import { latestPerProduct } from '../lib/releases.js'
+const latestReleases = latestPerProduct()
 
 const route = useRoute()
 const router = useRouter()
@@ -87,6 +89,12 @@ const filterLabel = computed(() => {
         <router-link v-for="p in featuredPosts" :key="p.slug" class="side-post" :to="`/post/${p.slug}`">
           <div class="who"><Avatar :name="p.author.name" size="s" />{{ p.author.name }} · {{ formatDate(p.date, false) }}</div>
           <div class="t">{{ p.title }}</div>
+        </router-link>
+      </section>
+      <section v-if="latestReleases.length">
+        <h3>Latest releases <router-link class="see-all" to="/releases">See all</router-link></h3>
+        <router-link v-for="r in latestReleases" :key="r.slug" class="side-row" :to="`/releases/${r.slug}`">
+          <span class="pshort">{{ r.product.short }}</span>{{ r.version }}<span class="n">{{ formatDate(r.date, false) }}</span>
         </router-link>
       </section>
       <section>

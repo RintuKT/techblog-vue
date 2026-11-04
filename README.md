@@ -30,6 +30,24 @@ npm run build      # outputs dist/
 3. Write the body in Markdown. Tables and code blocks work. Images are remote URLs: upload the image to the usual bucket/CDN and reference it with `![caption](https://...)`. Nothing binary goes in this repo.
 4. Set `draft: false`, commit, push. Whatever rebuilds and serves `dist/` picks it up.
 
+## Add a release
+
+Releases live in `content/releases/` and show on the Releases page, grouped by month and filterable by product. Copy `content/_release-template.md` to `content/releases/YYYY-MM-DD-<product>-<version>.md` and fill in:
+
+| Field | Required | Notes |
+|---|---|---|
+| `product` | yes | A key from `content/products.yaml`: web, ios, android, staff, sales, content, studio |
+| `version` | yes | App version, build number, or a date tag for dashboards |
+| `date` | yes | Release date, `YYYY-MM-DD` |
+| `title` | yes | What the release is about |
+| `type` | no | `release` (default), `major`, `hotfix`, `beta` |
+| `summary` | yes | One or two sentences for the list |
+| `images` | no | List of `{url, caption}`; remote URLs only. Phone screenshots and desktop screenshots both work |
+| `links` | no | List of `{label, url}`: store listing, release PR, ticket |
+| `author` | no | A key from `content/authors.yaml` |
+
+The body is free Markdown; the template suggests New / Improved / Fixed / Notes. Add a product by adding a key to `content/products.yaml`.
+
 ## Add yourself as an author
 
 Add an entry to `content/authors.yaml`:
@@ -54,13 +72,17 @@ content/
   authors.yaml       author directory
   categories.yaml    category keys and labels
   _template.md       copy this to start a post
+  _release-template.md
+  products.yaml      products that ship releases (tab order on the Releases page)
   posts/*.md         the posts
+  releases/*.md      release notes, one file per release
 src/
   lib/content.js     reads all posts at build time, parses front matter, renders Markdown
   lib/saved.js       bookmarks (localStorage, per browser)
   lib/theme.js       dark/light toggle (localStorage, defaults to dark)
-  views/             PostList (home: stats, feed, sidebar), PostView, AuthorsView, SavedView
-  components/        PostCard, Avatar, Icon
+  lib/releases.js    reads content/releases and content/products.yaml
+  views/             PostList (home), PostView, ReleasesView, ReleaseView, AuthorsView, SavedView
+  components/        PostCard, ReleaseCard, ScreenStrip, Avatar, Icon
   style.css          the whole stylesheet; dark by default, light via the header toggle
 ```
 

@@ -10,6 +10,7 @@ import Icon from './components/Icon.vue'
       <router-link to="/" class="brand"><span class="mark">E</span>Eduport Tech <small>internal</small></router-link>
       <nav class="nav">
         <router-link to="/">Stories</router-link>
+        <router-link to="/releases" :class="{ 'router-link-exact-active': $route.path.startsWith('/releases') }">Releases</router-link>
         <router-link to="/authors">Writers</router-link>
         <router-link to="/saved">Saved<template v-if="saved.length"> ({{ saved.length }})</template></router-link>
         <button class="icon-btn" :title="theme === 'dark' ? 'Switch to light' : 'Switch to dark'" @click="toggleTheme">
