@@ -5,7 +5,7 @@ author: tech-team
 category: insight
 tags: [infrastructure, cloud, cost, self-hosting, rds, video, decision-making]
 summary: We run our database on RDS and our video transcoding on our own machines. Both are the right call. This is the reasoning behind each, the cases that changed our minds, and the checklist we use before picking managed or self-hosted for anything new.
-cover: https://picsum.photos/seed/eduport-saas-selfhost/1200/675
+cover: https://assets.eduport.app/techblog/saasvsself-hos.png
 featured: true
 draft: false
 ---
