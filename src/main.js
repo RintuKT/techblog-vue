@@ -4,7 +4,6 @@ import App from './App.vue'
 import PostList from './views/PostList.vue'
 import PostView from './views/PostView.vue'
 import AuthorsView from './views/AuthorsView.vue'
-import SavedView from './views/SavedView.vue'
 import ReleasesView from './views/ReleasesView.vue'
 import ReleaseView from './views/ReleaseView.vue'
 import './style.css'
@@ -15,7 +14,6 @@ const router = createRouter({
     { path: '/', component: PostList },
     { path: '/post/:slug', component: PostView, props: true },
     { path: '/authors', component: AuthorsView },
-    { path: '/saved', component: SavedView },
     { path: '/releases', component: ReleasesView },
     { path: '/releases/:slug', component: ReleaseView, props: true },
     { path: '/:pathMatch(.*)*', redirect: '/' },

@@ -1,8 +1,6 @@
 <script setup>
 import { formatDate } from '../lib/content.js'
-import { isSaved, toggleSaved } from '../lib/saved.js'
 import Avatar from './Avatar.vue'
-import Icon from './Icon.vue'
 defineProps({ post: { type: Object, required: true } })
 </script>
 
@@ -20,11 +18,6 @@ defineProps({ post: { type: Object, required: true } })
       <div class="foot">
         <router-link class="chip filled" :to="{ path: '/', query: { category: post.category } }">{{ post.categoryLabel }}</router-link>
         <span>{{ post.minutes }} min read</span>
-        <span class="right">
-          <button class="icon-btn" :title="isSaved(post.slug) ? 'Remove from saved' : 'Save'" @click="toggleSaved(post.slug)">
-            <Icon :name="isSaved(post.slug) ? 'bookmark-filled' : 'bookmark'" />
-          </button>
-        </span>
       </div>
     </div>
     <router-link v-if="post.cover" class="thumb-wrap" :to="`/post/${post.slug}`">

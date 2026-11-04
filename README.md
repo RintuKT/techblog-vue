@@ -12,7 +12,7 @@ npm run build      # outputs dist/
 
 ## Write a post
 
-1. Copy `content/_template.md` to `content/posts/YYYY-MM-DD-short-slug.md`. The file name becomes the URL slug.
+1. Copy `content/_template.md` to `content/posts/YYYY-MM-DD-short-slug.md`. The file name becomes the URL slug. The template shows every supported element; `content/STYLE.md` is the house style.
 2. Fill in the front matter:
 
    | Field | Required | Notes |
@@ -71,17 +71,17 @@ Defined in `content/categories.yaml`. Current set: achievement, improvement, rel
 content/
   authors.yaml       author directory
   categories.yaml    category keys and labels
-  _template.md       copy this to start a post
+  STYLE.md           house style guide
+  _template.md       default post template; copy this to start a post
   _release-template.md
   products.yaml      products that ship releases (tab order on the Releases page)
   posts/*.md         the posts
   releases/*.md      release notes, one file per release
 src/
   lib/content.js     reads all posts at build time, parses front matter, renders Markdown
-  lib/saved.js       bookmarks (localStorage, per browser)
   lib/theme.js       dark/light toggle (localStorage, defaults to dark)
   lib/releases.js    reads content/releases and content/products.yaml
-  views/             PostList (home), PostView, ReleasesView, ReleaseView, AuthorsView, SavedView
+  views/             PostList (home), PostView, ReleasesView, ReleaseView, AuthorsView
   components/        PostCard, ReleaseCard, ScreenStrip, Avatar, Icon
   style.css          the whole stylesheet; dark by default, light via the header toggle
 ```

@@ -1,6 +1,5 @@
 <script setup>
 import { theme, toggleTheme } from './lib/theme.js'
-import { saved } from './lib/saved.js'
 import Icon from './components/Icon.vue'
 </script>
 
@@ -12,11 +11,10 @@ import Icon from './components/Icon.vue'
         <router-link to="/">Stories</router-link>
         <router-link to="/releases" :class="{ 'router-link-exact-active': $route.path.startsWith('/releases') }">Releases</router-link>
         <router-link to="/authors">Writers</router-link>
-        <router-link to="/saved">Saved<template v-if="saved.length"> ({{ saved.length }})</template></router-link>
-        <button class="icon-btn" :title="theme === 'dark' ? 'Switch to light' : 'Switch to dark'" @click="toggleTheme">
-          <Icon :name="theme === 'dark' ? 'sun' : 'moon'" />
-        </button>
       </nav>
+      <button class="icon-btn theme-btn" :title="theme === 'dark' ? 'Switch to light' : 'Switch to dark'" @click="toggleTheme">
+        <Icon :name="theme === 'dark' ? 'sun' : 'moon'" />
+      </button>
     </div>
   </header>
 
