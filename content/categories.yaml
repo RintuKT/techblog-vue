@@ -1,0 +1,8 @@
+# Allowed values for `category:` in a post. Order here is the display order.
+achievement: Achievement
+improvement: Improvement
+release: Release
+feature: New feature
+experiment: What we tried
+cost: Cost optimization
+insight: Insights & thoughts

@@ -1,0 +1,11 @@
+# One entry per author. The key is what posts reference in `author:`.
+# Add yourself here before publishing your first post.
+tech-team:
+  name: Eduport Tech Team
+  role: Engineering
+  email: tech@eduport.app
+
+infra:
+  name: Infrastructure Team
+  role: Platform & Infrastructure
+  email: tech@eduport.app
