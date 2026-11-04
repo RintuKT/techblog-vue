@@ -23,9 +23,11 @@ npm run build      # outputs dist/
    | `category` | yes | A key from `content/categories.yaml` |
    | `tags` | no | Lowercase list, e.g. `[database, latency]` |
    | `summary` | yes | Shown in the list view and under the title |
+   | `cover` | no | Remote image URL shown as the cover and the list thumbnail (1200×675 works well) |
+   | `featured` | no | `true` pins the post in the sidebar's Featured list |
    | `draft` | no | `true` hides the post from the built site (still visible in `npm run dev`) |
 
-3. Write the body in Markdown. Tables, code blocks, and images placed in `public/` all work.
+3. Write the body in Markdown. Tables and code blocks work. Images are remote URLs: upload the image to the usual bucket/CDN and reference it with `![caption](https://...)`. Nothing binary goes in this repo.
 4. Set `draft: false`, commit, push. Whatever rebuilds and serves `dist/` picks it up.
 
 ## Add yourself as an author
@@ -55,9 +57,11 @@ content/
   posts/*.md         the posts
 src/
   lib/content.js     reads all posts at build time, parses front matter, renders Markdown
-  views/             PostList (filters + list), PostView, AuthorsView
-  components/        PostMeta
-  style.css          the whole stylesheet; light and dark follow the OS setting
+  lib/saved.js       bookmarks (localStorage, per browser)
+  lib/theme.js       dark/light toggle (localStorage, defaults to dark)
+  views/             PostList (home: stats, feed, sidebar), PostView, AuthorsView, SavedView
+  components/        PostCard, Avatar, Icon
+  style.css          the whole stylesheet; dark by default, light via the header toggle
 ```
 
 ## Deploying internally

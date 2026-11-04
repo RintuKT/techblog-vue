@@ -5,6 +5,8 @@ author: tech-team          # key from content/authors.yaml
 category: improvement      # key from content/categories.yaml
 tags: [database, latency]  # free-form, lowercase
 summary: One or two sentences. This is what shows in the list view.
+cover: https://example.com/path/to/image.png   # optional; a remote URL (S3, CDN, Drive share link, etc.)
+featured: false            # true pins it in the sidebar
 draft: true                # drafts are hidden from the site; set false to publish
 ---
 

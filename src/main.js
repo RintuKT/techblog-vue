@@ -4,6 +4,7 @@ import App from './App.vue'
 import PostList from './views/PostList.vue'
 import PostView from './views/PostView.vue'
 import AuthorsView from './views/AuthorsView.vue'
+import SavedView from './views/SavedView.vue'
 import './style.css'
 
 const router = createRouter({
@@ -12,9 +13,10 @@ const router = createRouter({
     { path: '/', component: PostList },
     { path: '/post/:slug', component: PostView, props: true },
     { path: '/authors', component: AuthorsView },
+    { path: '/saved', component: SavedView },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
-  scrollBehavior: () => ({ top: 0 }),
+  scrollBehavior: (to, from) => (to.path === from.path ? undefined : { top: 0 }),
 })
 
 router.afterEach((to) => {

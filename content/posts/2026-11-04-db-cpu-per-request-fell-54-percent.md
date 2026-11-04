@@ -5,6 +5,8 @@ author: infra
 category: cost
 tags: [database, postgres, latency, production]
 summary: Compared with the previous Tuesday, November 3 served 5.8% more origin requests while combined primary and replica CPU cost fell from 35.21 to 16.01 milliseconds per request. Overall latency improved and connection churn nearly disappeared.
+cover: https://picsum.photos/seed/eduport-db-cpu/1200/675
+featured: true
 draft: false
 ---
 
