@@ -5,7 +5,7 @@ author: tech-team
 category: insight
 tags: [meta, writing]
 summary: What this blog is for, what belongs here, and how to publish a post in under five minutes.
-cover: https://picsum.photos/seed/eduport-welcome/1200/675
+cover: https://assets.eduport.app/techblog/intro.png
 featured: true
 draft: false
 ---
