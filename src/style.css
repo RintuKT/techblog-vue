@@ -29,6 +29,9 @@
   --tab-lens: rgb(255 255 255 / 0.12);
   --tabbar-bg: rgb(18 18 18 / 0.86);
   --mono-top: #77777c;
+  --badge-tint: 22%;
+  --badge-ink: 72%;
+  --badge-ink-with: #fff;
   --mono-bottom: #545458;
 
   --w-site: 1192px;
@@ -63,6 +66,9 @@
   --tab-lens: rgb(0 0 0 / 0.06);
   --tabbar-bg: rgb(255 255 255 / 0.88);
   --mono-top: #a8a8ad;
+  --badge-tint: 12%;
+  --badge-ink: 88%;
+  --badge-ink-with: #000;
   --mono-bottom: #85858a;
 
   color-scheme: light;
@@ -182,7 +188,8 @@ a, button, label, select, input { touch-action: manipulation; }
 .cal-week, .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
 .cal-week span { padding: 6px 0; text-align: center; font-size: 11px; font-weight: 500; color: var(--fg-3); }
 .cal-grid { row-gap: 2px; }
-.cal-day { position: relative; display: grid; place-items: center; align-content: center; row-gap: 4px; justify-self: center; width: 100%; max-width: 38px; height: 42px; font-size: 13px; color: var(--fg-3); border-radius: 10px; font-variant-numeric: tabular-nums; }
+/* A day keeps the same shape at any width (a little taller than wide), with a sliver of space between neighbours */
+.cal-day { position: relative; display: grid; place-items: center; align-content: center; row-gap: 3px; justify-self: center; width: calc(100% - 2px); max-width: 38px; height: auto; aspect-ratio: 6 / 7; font-size: 13px; color: var(--fg-3); border-radius: 10px; font-variant-numeric: tabular-nums; }
 .cal-sub { max-width: 100%; overflow: hidden; font-size: 9px; font-weight: 600; line-height: 1; letter-spacing: 0.01em; white-space: nowrap; }
 .cal-day.today { box-shadow: inset 0 0 0 1px var(--line-2); }
 .cal-day.active { color: var(--fg); }
@@ -268,6 +275,10 @@ a, button, label, select, input { touch-action: manipulation; }
 
 /* Avatar: a photo when authors.yaml has one, otherwise the writer's own monochrome mark (see Avatar.vue) */
 .avatar { border-radius: 50%; display: inline-grid; place-items: center; flex: none; overflow: hidden; object-fit: cover; }
+/* Writer badge: a pale circle in the writer's colour (a deeper wash in dark mode), the cap and the word in that colour */
+.avatar.badge { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; color: color-mix(in srgb, var(--wc) var(--badge-ink), var(--badge-ink-with)); background: color-mix(in srgb, var(--wc) var(--badge-tint), var(--bg)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wc) 22%, transparent); user-select: none; }
+.avatar.badge b { font-size: 7px; font-weight: 700; line-height: 1; letter-spacing: 0.06em; }
+.avatar.badge.l b { font-size: 8.5px; }
 /* Monogram: white initials on a soft grey gradient with a fine edge, like a contact card */
 .avatar.mono { color: #fff; background: linear-gradient(180deg, var(--mono-top), var(--mono-bottom)); box-shadow: inset 0 0 0 0.5px rgb(0 0 0 / 0.12), inset 0 1px 0 rgb(255 255 255 / 0.18); font-family: ui-rounded, -apple-system, BlinkMacSystemFont, "SF Pro Rounded", var(--sans); font-weight: 600; letter-spacing: 0.02em; line-height: 1; user-select: none; }
 img.avatar { background: var(--bg-elev); }
@@ -439,6 +450,7 @@ img.avatar { background: var(--bg-elev); }
 }
 
 @media (max-width: 1023px) {
+  .rail .cal-day .icon { width: 14px; height: 14px; }
   .home { grid-template-columns: 240px minmax(0, 1fr); gap: 0 28px; }
   .card .body { gap: 0 20px; }
   .card .thumb { width: 112px; height: 75px; }
@@ -467,7 +479,7 @@ img.avatar { background: var(--bg-elev); }
   .dstrip .cal-nav .icon-btn[aria-disabled="true"], .dstrip .cal-nav .icon-btn[aria-disabled="true"]:active { opacity: 0.3; cursor: default; background: none; transform: none; }
   /* The strip's caption already shows a picked day on phones */
   .home .label .day-clear { display: none; }
-  .dstrip .cal-day { max-width: 44px; height: 46px; }
+  .dstrip .cal-day { max-width: 44px; height: 46px; row-gap: 4px; }
   .ds-pick { display: flex; align-items: center; justify-content: space-between; height: 40px; font-size: 13px; font-weight: 500; color: var(--fg-2); }
   .ds-pick .clear { display: inline-flex; align-items: center; gap: 4px; align-self: stretch; padding-left: 16px; font-weight: 400; color: var(--fg-2); }
   @media (hover: hover) { .ds-pick .clear:hover { color: var(--fg); } }
