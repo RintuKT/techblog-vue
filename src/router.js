@@ -22,9 +22,13 @@ export function createBlogRouter(history) {
       { path: '/:pathMatch(.*)*', component: NotFound },
     ],
     // Back and forward return to where you were (a frame later, once a lazily loaded body is in);
-    // a new page starts at the top, and filters on the same page keep the scroll.
-    scrollBehavior: (to, from, saved) =>
-      saved ? new Promise((done) => requestAnimationFrame(() => done(saved))) : to.path === from.path ? undefined : { top: 0 },
+    // a new page starts at the top, and filters on the same page keep the scroll. A reload starts with the phone
+    // calendar folded, so what an open month added above the stories comes off (dsExtra, see DayStrip).
+    scrollBehavior: (to, from, saved) => {
+      if (!saved) return to.path === from.path ? undefined : { top: 0 }
+      const extra = history.state?.dsExtra || 0
+      return new Promise((done) => requestAnimationFrame(() => done({ left: saved.left, top: Math.max(0, saved.top - extra) })))
+    },
   })
 }
 

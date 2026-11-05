@@ -1,12 +1,18 @@
 # One entry per author. The key is what posts reference in `author:`.
 # Add yourself here before publishing your first post.
-# Optional `avatar:` is a remote URL to a square photo; without it the site draws a mark from the name.
+# Optional `badge:` (one short word, like TECH) and `color:` (a hex colour) give a writer a badge:
+# a graduation cap with the word under it, both in that colour. Or `avatar:` for a square photo (a remote URL
+# or a file in public/). With neither, the site shows the name's initials.
 tech-team:
   name: Eduport Tech Team
+  badge: TECH
+  color: '#f26a21'
   role: Engineering
   email: tech@eduport.app
 
 infra:
   name: Infrastructure Team
+  badge: INFRA
+  color: '#2f6fed'
   role: Platform & Infrastructure
   email: tech@eduport.app

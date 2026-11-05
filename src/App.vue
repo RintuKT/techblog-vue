@@ -70,9 +70,12 @@ onMounted(() => router.isReady().then(() => requestAnimationFrame(() => { pillMo
   </footer>
 
   <nav class="tabbar" aria-label="Sections">
-    <router-link v-for="(s, i) in sections" :key="s.to" :to="s.to" :class="{ on: i === pillAt }" @pointerdown="press(i, $event)">
-      <Icon :name="s.icon" :size="20" :stroke-width="i === pillAt ? 2 : 1.5" />
-      <span>{{ s.label }}</span>
-    </router-link>
+    <div class="tabbar-in" :style="{ '--n': sections.length, '--i': pillAt }">
+      <span v-show="pillAt >= 0" class="tabbar-line" :class="{ moves: pillMoves }" aria-hidden="true"></span>
+      <router-link v-for="(s, i) in sections" :key="s.to" :to="s.to" :class="{ on: i === pillAt }" @pointerdown="press(i, $event)">
+        <Icon :name="s.icon" :size="20" :stroke-width="i === pillAt ? 2 : 1.5" />
+        <span>{{ s.label }}</span>
+      </router-link>
+    </div>
   </nav>
 </template>

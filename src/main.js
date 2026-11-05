@@ -5,6 +5,9 @@ import { createBlogRouter, loadBody } from './router.js'
 import { applyHead, pageMeta } from './lib/seo.js'
 import './style.css'
 
+// Links shared before the switch to real paths look like /#/post/slug: send them to /post/slug.
+if (location.hash.startsWith('#/')) history.replaceState(null, '', location.hash.slice(1))
+
 const router = createBlogRouter(createWebHistory())
 router.afterEach((to) => applyHead(pageMeta(to)))
 

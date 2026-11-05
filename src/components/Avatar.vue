@@ -1,34 +1,27 @@
 <script setup>
 import { computed } from 'vue'
+import Icon from './Icon.vue'
 const props = defineProps({
-  author: { type: Object, required: true }, // an entry from authors.yaml: name, optional avatar photo
+  author: { type: Object, required: true }, // an entry from authors.yaml: name, optional badge + color, or avatar photo
   size: { type: String, default: 's' },
 })
 
-// Without a photo each writer gets a small abstract mark drawn from their name: a circle, a bar and a dot,
-// placed by a hash of the name, so the same writer always gets the same mark. Monochrome, like the site.
-const mark = computed(() => {
-  let h = 2166136261
-  for (const c of String(props.author.name || '')) h = Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0
-  const pick = (n) => {
-    h = Math.imul(h ^ (h >>> 15), 2246822507) >>> 0
-    return h % n
-  }
-  return {
-    disc: { cx: 6 + pick(24), cy: 6 + pick(24), r: 10 + pick(6) },
-    bar: { y: 12 + pick(10), rot: pick(180) },
-    dot: { cx: 9 + pick(18), cy: 9 + pick(18), r: 3 + pick(2) },
-  }
+// A writer with a badge gets a graduation cap (the Eduport motif) with their word under it (TECH, INFRA), both in
+// their colour and nothing else around them; the smallest size shows the cap alone. Without a badge or a photo, a monogram:
+// the initials of the first and last word of the name ("Team" left out), white on soft grey.
+const capSize = { s: 13, m: 18, l: 23 }
+const initials = computed(() => {
+  const words = String(props.author.name || '?').split(/\s+/).filter((w) => w && !/^team$/i.test(w))
+  const first = words[0]?.[0] || '?'
+  return (words.length > 1 ? first + words[words.length - 1][0] : first).toUpperCase()
 })
 </script>
 
 <template>
   <img v-if="author.avatar" class="avatar" :class="size" :src="author.avatar" alt="" loading="lazy" decoding="async" />
-  <span v-else class="avatar mark" :class="size" aria-hidden="true">
-    <svg viewBox="0 0 36 36">
-      <circle class="m-disc" :cx="mark.disc.cx" :cy="mark.disc.cy" :r="mark.disc.r" />
-      <rect class="m-bar" x="-4" :y="mark.bar.y" width="44" height="5" rx="2.5" :transform="`rotate(${mark.bar.rot} 18 18)`" />
-      <circle class="m-dot" :cx="mark.dot.cx" :cy="mark.dot.cy" :r="mark.dot.r" />
-    </svg>
+  <span v-else-if="author.badge" class="avatar badge" :class="size" :style="{ '--wc': author.color || '#8a8a8a' }" aria-hidden="true">
+    <Icon name="cap" :size="capSize[size] || 18" :stroke-width="1.6" />
+    <b v-if="size !== 's'">{{ author.badge }}</b>
   </span>
+  <span v-else class="avatar mono" :class="size" aria-hidden="true">{{ initials }}</span>
 </template>

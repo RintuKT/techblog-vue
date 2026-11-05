@@ -27,6 +27,11 @@
   --glass-shadow-s: 0 2px 12px rgb(0 0 0 / 0.3);
   --glass-blur: saturate(1.6) blur(20px);
   --tab-lens: rgb(255 255 255 / 0.12);
+  --tabbar-bg: rgb(18 18 18 / 0.86);
+  --mono-top: #77777c;
+  --badge-ink: 72%;
+  --badge-ink-with: #fff;
+  --mono-bottom: #545458;
 
   --w-site: 1192px;
   --w-read: 680px;
@@ -58,6 +63,11 @@
   --glass-shadow: 0 8px 32px rgb(0 0 0 / 0.07);
   --glass-shadow-s: 0 2px 12px rgb(0 0 0 / 0.05);
   --tab-lens: rgb(0 0 0 / 0.06);
+  --tabbar-bg: rgb(255 255 255 / 0.88);
+  --mono-top: #a8a8ad;
+  --badge-ink: 88%;
+  --badge-ink-with: #000;
+  --mono-bottom: #85858a;
 
   color-scheme: light;
 }
@@ -95,7 +105,7 @@ a, button, label, select, input { touch-action: manipulation; }
 /* A pressed control gives a small, quick squeeze */
 :is(.tab, .tabbar a, .icon-btn, .cal-day.active, a.chip, .pill, .ext, .fsel, .search-clear):active { transform: scale(0.96); }
 @media (prefers-reduced-motion: reduce) {
-  .nav-pill.moves { transition: none; }
+  .nav-pill.moves, .tabbar-line.moves { transition: none; }
 }
 .icon-btn.theme-btn { flex: none; position: relative; width: 38px; height: 38px; }
 @media (hover: hover) { .icon-btn.theme-btn:hover { color: var(--fg); } }
@@ -144,8 +154,6 @@ a, button, label, select, input { touch-action: manipulation; }
 /* Home grid: a left rail (the calendar) that stays in view, the feed, and Featured on the right */
 .home { display: grid; grid-template-columns: 256px minmax(0, 1fr) 240px; grid-template-areas: "rail feed side"; gap: 0 40px; padding-block: 44px 80px; }
 .rail { grid-area: rail; display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; align-self: start; position: sticky; top: calc(var(--header-h) + 20px); min-width: 0; }
-/* The phone copy of the calendar, after the stories; only one of the two shows at a time */
-.rail-inline { display: none; grid-template-columns: minmax(0, 1fr); gap: 28px; max-width: 380px; margin-top: 36px; }
 .home .label { display: flex; align-items: center; gap: 14px; min-height: 40px; margin-bottom: 18px; }
 .home .label > div { min-width: 0; }
 .home .label h2 { margin: 0; font-size: 22px; font-weight: 600; line-height: 1.25; letter-spacing: -0.01em; overflow-wrap: anywhere; }
@@ -178,7 +186,8 @@ a, button, label, select, input { touch-action: manipulation; }
 .cal-week, .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
 .cal-week span { padding: 6px 0; text-align: center; font-size: 11px; font-weight: 500; color: var(--fg-3); }
 .cal-grid { row-gap: 2px; }
-.cal-day { position: relative; display: grid; place-items: center; align-content: center; row-gap: 4px; justify-self: center; width: 100%; max-width: 38px; height: 42px; font-size: 13px; color: var(--fg-3); border-radius: 10px; font-variant-numeric: tabular-nums; }
+/* A day keeps the same shape at any width (a little taller than wide), with a sliver of space between neighbours */
+.cal-day { position: relative; display: grid; place-items: center; align-content: center; row-gap: 3px; justify-self: center; width: calc(100% - 2px); max-width: 38px; height: auto; aspect-ratio: 6 / 7; font-size: 13px; color: var(--fg-3); border-radius: 10px; font-variant-numeric: tabular-nums; }
 .cal-sub { max-width: 100%; overflow: hidden; font-size: 9px; font-weight: 600; line-height: 1; letter-spacing: 0.01em; white-space: nowrap; }
 .cal-day.today { box-shadow: inset 0 0 0 1px var(--line-2); }
 .cal-day.active { color: var(--fg); }
@@ -192,14 +201,17 @@ a, button, label, select, input { touch-action: manipulation; }
 .cal-item .v { flex: none; font-family: var(--mono); font-size: 12px; color: var(--fg-2); }
 .cal-item .t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (hover: hover) { .cal-item:hover .t { text-decoration: underline; text-underline-offset: 3px; } }
-/* A new month shows at once (the old one is gone the same frame) and only eases in a few pixels */
-.cal-next-leave-active, .cal-prev-leave-active { display: none; }
-.cal-next-enter-active, .cal-prev-enter-active { transition: opacity 0.16s ease-out, transform 0.16s ease-out; }
+/* A new month (or week) shows at once (the old one is gone the same frame) and only eases in a few pixels;
+   the phone strip opening into its month, or folding back, eases down the same way */
+.cal-next-leave-active, .cal-prev-leave-active, .cal-open-leave-active { display: none; }
+.cal-next-enter-active, .cal-prev-enter-active, .cal-open-enter-active { transition: opacity 0.16s ease-out, transform 0.16s ease-out; }
 .cal-next-enter-from { opacity: 0; transform: translateX(8px); }
 .cal-prev-enter-from { opacity: 0; transform: translateX(-8px); }
+.cal-open-enter-from { opacity: 0; transform: translateY(-4px); }
 @media (prefers-reduced-motion: reduce) {
-  .cal-next-enter-active, .cal-prev-enter-active { transition: none; }
+  .cal-next-enter-active, .cal-prev-enter-active, .cal-open-enter-active { transition: none; }
 }
+.dstrip { display: none; }
 
 /* Filters: search field + pill selects */
 .filters { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
@@ -225,7 +237,7 @@ a, button, label, select, input { touch-action: manipulation; }
 .card h2 a::after, .rel h2 a::after { content: ""; position: absolute; inset: 0; }
 .card .who a, .card .foot a, .rel-chips a, .rel-foot a, .rel .strip { position: relative; z-index: 1; }
 @media (hover: none) {
-  .card:active, .rel:active { opacity: 0.7; transition: none; }
+  .card:active, .rel:active, .day-rel:active { opacity: 0.7; transition: none; }
 }
 .card:first-of-type { padding-top: 16px; }
 .card .who { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--fg-2); margin-bottom: 10px; white-space: nowrap; min-width: 0; }
@@ -238,6 +250,15 @@ a, button, label, select, input { touch-action: manipulation; }
 .card .foot { display: flex; align-items: center; gap: 14px; margin-top: 16px; font-size: 13px; color: var(--fg-2); white-space: nowrap; }
 .card .thumb-wrap { display: block; }
 .card .thumb { width: 160px; max-width: none; height: 107px; object-fit: cover; border-radius: 8px; background: var(--bg-elev); }
+/* A picked day's releases follow its stories, one quiet row each (the app, its version, the title); the row is the link */
+.day-rel { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 14px; padding: 18px 0; border-bottom: 1px solid var(--line); transition: opacity 0.15s ease; }
+.filters + .day-rel { padding-top: 16px; }
+.day-rel .icon { grid-row: span 2; margin-top: 1px; color: var(--fg-2); }
+.day-rel .m { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.day-rel .v { font-family: var(--mono); font-size: 12px; color: var(--fg-2); white-space: nowrap; }
+.day-rel .chip { font-size: 11px; padding: 1px 8px; }
+.day-rel .t { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 17px; font-weight: 700; line-height: 1.3; letter-spacing: -0.01em; }
+@media (hover: hover) { .day-rel:hover .t { text-decoration: underline; text-underline-offset: 3px; } }
 .chip { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--fg); background: var(--chip-bg); border: 1px solid var(--line-2); border-radius: 999px; padding: 4px 12px; line-height: 1.4; white-space: nowrap; }
 @media (hover: hover) { .chip:hover { border-color: var(--fg-3); } }
 .chip.filled { background: var(--bg-elev); border-color: transparent; color: var(--fg-2); }
@@ -252,13 +273,15 @@ a, button, label, select, input { touch-action: manipulation; }
 
 /* Avatar: a photo when authors.yaml has one, otherwise the writer's own monochrome mark (see Avatar.vue) */
 .avatar { border-radius: 50%; display: inline-grid; place-items: center; flex: none; overflow: hidden; object-fit: cover; }
-.avatar.mark { background: var(--bg-elev); box-shadow: inset 0 0 0 1px var(--line-2); }
-.avatar.mark svg { width: 100%; height: 100%; }
-.m-disc { fill: var(--line-2); }
-.m-bar { fill: var(--fg-3); }
-.m-dot { fill: var(--fg); }
+/* Writer badge: only the cap and the word carry the writer's colour (a lighter shade in dark mode); no fill, no ring */
+.avatar.badge { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; color: color-mix(in srgb, var(--wc) var(--badge-ink), var(--badge-ink-with)); background: none; user-select: none; }
+.avatar.badge .icon { color: inherit; }
+.avatar.badge b { font-size: 7px; font-weight: 700; line-height: 1; letter-spacing: 0.06em; }
+.avatar.badge.l b { font-size: 8.5px; }
+/* Monogram: white initials on a soft grey gradient with a fine edge, like a contact card */
+.avatar.mono { color: #fff; background: linear-gradient(180deg, var(--mono-top), var(--mono-bottom)); box-shadow: inset 0 0 0 0.5px rgb(0 0 0 / 0.12), inset 0 1px 0 rgb(255 255 255 / 0.18); font-family: ui-rounded, -apple-system, BlinkMacSystemFont, "SF Pro Rounded", var(--sans); font-weight: 600; letter-spacing: 0.02em; line-height: 1; user-select: none; }
 img.avatar { background: var(--bg-elev); }
-.avatar.s { width: 24px; height: 24px; font-size: 10px; }
+.avatar.s { width: 24px; height: 24px; font-size: 9.5px; }
 .avatar.m { width: 40px; height: 40px; font-size: 15px; }
 .avatar.l { width: 56px; height: 56px; font-size: 20px; }
 
@@ -426,6 +449,7 @@ img.avatar { background: var(--bg-elev); }
 }
 
 @media (max-width: 1023px) {
+  .rail .cal-day .icon { width: 14px; height: 14px; }
   .home { grid-template-columns: 240px minmax(0, 1fr); gap: 0 28px; }
   .card .body { gap: 0 20px; }
   .card .thumb { width: 112px; height: 75px; }
@@ -434,12 +458,31 @@ img.avatar { background: var(--bg-elev); }
   .rel { grid-template-columns: 120px minmax(0, 1fr); gap: 0 20px; }
 }
 
-/* Narrow phones: one column; the calendar follows the stories (PostList renders it there) */
+/* Narrow phones: one column; the calendar heads the feed as a flat week strip (DayStrip) that picks the day it shows */
 @media (max-width: 679px) {
   .rail { display: none; }
-  .rail-inline { display: grid; }
   .home { grid-template-columns: minmax(0, 1fr); grid-template-areas: "feed"; grid-template-rows: none; }
   .sidebar { display: none; }
+  /* The banner already heads the list (all stories, a search, a day), so the title row shows only for a writer, category or topic */
+  .home .label.quiet { display: none; }
+  .dstrip { display: block; margin-bottom: 16px; }
+  .dstrip .cal-head { height: 40px; margin: 0; padding: 0; }
+  .ds-title { display: inline-flex; align-items: center; gap: 6px; height: 40px; font-size: 16px; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; }
+  .ds-title .ds-y { font-weight: 400; color: var(--fg-3); }
+  .ds-title .icon { color: var(--fg-3); transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1); }
+  .ds-title[aria-expanded="true"] .icon { transform: rotate(180deg); }
+  .ds-title:active { transform: scale(0.96); }
+  /* Finger-sized arrows, pulled out so the chevron lines up with the gutter */
+  .dstrip .cal-nav { margin-right: -11px; }
+  .dstrip .cal-nav .icon-btn { width: 40px; height: 40px; }
+  .dstrip .cal-nav .icon-btn[aria-disabled="true"], .dstrip .cal-nav .icon-btn[aria-disabled="true"]:active { opacity: 0.3; cursor: default; background: none; transform: none; }
+  /* The strip's caption already shows a picked day on phones */
+  .home .label .day-clear { display: none; }
+  .dstrip .cal-day { max-width: 44px; height: 46px; row-gap: 4px; }
+  .ds-pick { display: flex; align-items: center; justify-content: space-between; height: 40px; font-size: 13px; font-weight: 500; color: var(--fg-2); }
+  .ds-pick .clear { display: inline-flex; align-items: center; gap: 4px; align-self: stretch; padding-left: 16px; font-weight: 400; color: var(--fg-2); }
+  @media (hover: hover) { .ds-pick .clear:hover { color: var(--fg); } }
+  @media (prefers-reduced-motion: reduce) { .ds-title .icon { transition: none; } }
 }
 
 /* Phones */
@@ -450,11 +493,16 @@ img.avatar { background: var(--bg-elev); }
   .brand { font-size: 18px; }
   .nav { display: none; }
   .theme-btn { margin-left: auto; }
-  /* A flat bottom bar in the Substack way: full width, a hairline on top, small icons with small labels.
-     The current tab is simply darker (with a bolder icon); it switches on press. */
-  .tabbar { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; position: fixed; z-index: 20; left: 0; right: 0; bottom: 0; height: calc(var(--tabbar-h) + env(safe-area-inset-bottom)); padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); background: var(--glass-bar); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); border: 0; border-top: 1px solid var(--glass-line); border-radius: 0; box-shadow: none; }
+  /* A flat bottom bar in the Substack way: full width with a hairline on top, clean frosted glass (no colour boost,
+     so pictures passing under it leave no tint), small icons and labels kept to a phone-wide group in the middle.
+     The current tab is darker, with a short line above it that glides between tabs (translate only). */
+  .tabbar { display: block; position: fixed; z-index: 20; left: 0; right: 0; bottom: 0; height: calc(var(--tabbar-h) + env(safe-area-inset-bottom)); padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); background: var(--tabbar-bg); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); border: 0; border-top: 1px solid var(--glass-line); border-radius: 0; box-shadow: none; }
+  .tabbar-in { position: relative; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); max-width: 440px; height: 100%; margin: 0 auto; }
   .tabbar a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 10px; font-weight: 500; color: var(--fg-3); transition: color 0.12s ease; }
   .tabbar a.on { color: var(--fg); }
+  .tabbar-line { position: absolute; top: -1px; left: 0; width: calc(100% / var(--n)); height: 2px; pointer-events: none; translate: calc(var(--i) * 100%) 0; }
+  .tabbar-line::before { content: ""; display: block; width: 24px; height: 100%; margin: 0 auto; border-radius: 0 0 2px 2px; background: var(--fg); }
+  .tabbar-line.moves { transition: translate 0.3s cubic-bezier(0.25, 1, 0.5, 1); }
   body:has(.search input:focus) .tabbar { display: none; }
 
   .pub-banner { padding-top: 32px; }

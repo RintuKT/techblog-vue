@@ -14,7 +14,9 @@ let errors = 0
 const fail = (file, msg) => { errors++; console.error(`  ✗ ${file}: ${msg}`) }
 
 for (const [key, a] of Object.entries(authors)) {
-  if (a?.avatar && !/^https?:\/\//.test(String(a.avatar))) fail('authors.yaml', `avatar for "${key}" must be a remote URL`)
+  if (a?.avatar && !/^(https?:\/\/|\/)/.test(String(a.avatar))) fail('authors.yaml', `avatar for "${key}" must be a remote URL or a path from public/`)
+  if (a?.color && !/^#[0-9a-f]{6}$/i.test(String(a.color))) fail('authors.yaml', `color for "${key}" must be a hex colour like '#2f6fed' (in quotes)`)
+  if (a?.badge && String(a.badge).length > 6) fail('authors.yaml', `badge for "${key}" must be one short word (6 letters at most)`)
 }
 
 function frontMatter(file, text) {
