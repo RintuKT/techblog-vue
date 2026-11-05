@@ -1,41 +1,31 @@
 <script setup>
-import { computed, ref } from 'vue'
-import { posts } from '../lib/content.js'
-import { releases } from '../lib/releases.js'
+import { computed, ref, watch } from 'vue'
+import { byDay, activeDays, lastDay, minMonth, newestDay, yearsTo, useToday, pad, parse, longDate, monthCells } from '../lib/activity.js'
 import Icon from './Icon.vue'
 
-// Every story and release, keyed by day (YYYY-MM-DD).
-const byDay = new Map()
-const add = (day, item) => (byDay.get(day) || byDay.set(day, []).get(day)).push(item)
-for (const p of posts) add(p.date, { kind: 'story', key: `p:${p.slug}`, to: `/post/${p.slug}`, title: p.title, icon: 'stories' })
-for (const r of releases) {
-  // Under its icon a release shows its version (4.12.0 reads 4.12); dashboards versioned by date show the day.
-  const version = r.version.split(' ')[0]
-  const short = /^\d{4}\.\d{2}\.\d{2}$/.test(version) ? '' : version.replace(/^(\d+\.\d+)\.0$/, '$1')
-  add(r.date, { kind: 'release', key: `r:${r.slug}`, to: `/releases/${r.slug}`, title: r.title, icon: r.product.icon || 'releases', label: `${r.product.short} ${version}`, short })
-}
-const activeDays = [...byDay.keys()].sort()
-
-const pad = (n) => String(n).padStart(2, '0')
-const now = new Date()
-const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
-const lastDay = activeDays[activeDays.length - 1] || today
-const minMonth = (activeDays[0] || today).slice(0, 7)
-const maxMonth = [lastDay.slice(0, 7), today.slice(0, 7)].sort()[1]
-// The years on top of the calendar, newest first; picking one opens its latest month with something in it.
-const years = []
-for (let y = +maxMonth.slice(0, 4); y >= +minMonth.slice(0, 4); y--) years.push(String(y))
-
-const month = ref(lastDay.slice(0, 7))
-const selected = ref(activeDays.length ? lastDay : '')
+// The laptop and tablet calendar (the rail). The days come from lib/activity.js, shared with the phone strip.
+// When the page shows one day (?day, from a phone link), the rail opens on it and its days change that day.
+const props = defineProps({ day: { type: String, default: '' } })
+const emit = defineEmits(['pick'])
+const now = useToday()
+const maxMonth = computed(() => newestDay(now.value).slice(0, 7))
+const years = computed(() => yearsTo(maxMonth.value))
+const month = ref((props.day || lastDay).slice(0, 7))
+const selected = ref(props.day || (activeDays.length ? lastDay : ''))
 const dir = ref('next')
 const year = computed(() => month.value.slice(0, 4))
-
-const parse = (key) => key.split('-').map(Number)
-const longDate = (key, opts) => new Date(`${key}T00:00:00`).toLocaleDateString('en-US', opts)
+watch(() => props.day, (d) => {
+  if (!d) return
+  go(d.slice(0, 7))
+  selected.value = d
+})
+function choose(key) {
+  selected.value = key
+  if (props.day) emit('pick', key)
+}
 
 function go(next) {
-  if (next === month.value || next < minMonth || next > maxMonth) return
+  if (next === month.value || next < minMonth || next > maxMonth.value) return
   dir.value = next > month.value ? 'next' : 'prev'
   month.value = next
   selected.value = activeDays.filter((k) => k.startsWith(next)).pop() || ''
@@ -48,26 +38,11 @@ function shift(step) {
 function pickYear(y) {
   if (y === year.value) return
   const last = activeDays.filter((k) => k.startsWith(y)).pop()
-  go(last ? last.slice(0, 7) : y === maxMonth.slice(0, 4) ? maxMonth : `${y}-12`)
+  go(last ? last.slice(0, 7) : y === maxMonth.value.slice(0, 4) ? maxMonth.value : `${y}-12`)
 }
 
 const monthName = computed(() => longDate(`${month.value}-01`, { month: 'long' }))
-const cells = computed(() => {
-  const [y, m] = parse(month.value)
-  const out = Array.from({ length: new Date(y, m - 1, 1).getDay() }, (_, i) => ({ key: `lead${i}` }))
-  for (let d = 1, n = new Date(y, m, 0).getDate(); d <= n; d++) {
-    const key = `${month.value}-${pad(d)}`
-    const items = byDay.get(key) || []
-    const stories = items.filter((i) => i.kind === 'story').length
-    const shipped = items.length - stories
-    const summary = [stories && `${stories} ${stories === 1 ? 'story' : 'stories'}`, shipped && `${shipped} ${shipped === 1 ? 'release' : 'releases'}`].filter(Boolean).join(', ')
-    // An active day shows what happened: the app that shipped with its version, or a story with the date.
-    const release = items.find((i) => i.kind === 'release')
-    const icon = (release || items[0])?.icon
-    out.push({ key, day: d, items, icon, sub: release?.short || String(d), label: `${longDate(key, { month: 'long', day: 'numeric' })}: ${summary}` })
-  }
-  return out
-})
+const cells = computed(() => monthCells(month.value))
 const picked = computed(() => byDay.get(selected.value) || [])
 </script>
 
@@ -92,16 +67,16 @@ const picked = computed(() => byDay.get(selected.value) || [])
           <button
             v-else-if="c.items.length"
             class="cal-day active"
-            :class="{ on: c.key === selected, today: c.key === today }"
+            :class="{ on: c.key === selected, today: c.key === now }"
             :aria-pressed="c.key === selected"
             :aria-label="c.label"
             :title="c.label"
-            @click="selected = c.key"
+            @click="choose(c.key)"
           >
             <Icon :name="c.icon" :size="15" />
             <span class="cal-sub">{{ c.sub }}</span>
           </button>
-          <span v-else class="cal-day" :class="{ today: c.key === today }">{{ c.day }}</span>
+          <span v-else class="cal-day" :class="{ today: c.key === now }">{{ c.day }}</span>
         </template>
       </div>
     </Transition>

@@ -2,13 +2,16 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { posts, usedAuthors, usedCategories, allTags, tagCounts, featuredPosts, formatDate } from '../lib/content.js'
+import { releases } from '../lib/releases.js'
+import { byDay, dayMap, releaseLabel, longDate } from '../lib/activity.js'
 import PostCard from '../components/PostCard.vue'
 import Avatar from '../components/Avatar.vue'
 import Icon from '../components/Icon.vue'
 import ActivityCalendar from '../components/ActivityCalendar.vue'
+import DayStrip from '../components/DayStrip.vue'
 
-// The calendar sits in a left rail wherever there is room; on phones the copy after the stories shows instead
-// (style.css picks one), so the page renders the same everywhere, including at build time.
+// The calendar sits in a left rail wherever there is room; on phones a week strip heads the feed instead and
+// picks the day the list shows (?day). style.css picks one, so the page renders the same everywhere, build included.
 const route = useRoute()
 const router = useRouter()
 
@@ -16,9 +19,16 @@ const q = computed(() => String(route.query.q || ''))
 const author = computed(() => String(route.query.author || ''))
 const category = computed(() => String(route.query.category || ''))
 const tag = computed(() => String(route.query.tag || ''))
-const hasFilter = computed(() => Boolean(q.value || author.value || category.value || tag.value))
-// Typing a search keeps the banner, so the field does not jump away from the cursor.
-const showBanner = computed(() => !author.value && !category.value && !tag.value)
+// A writer, category or topic: one at a time, each from its own link.
+const scoped = computed(() => Boolean(author.value || category.value || tag.value))
+const inScope = (p) => (!author.value || p.authorKey === author.value) && (!category.value || p.category === category.value) && (!tag.value || p.tags.includes(tag.value))
+// The phone calendar shows what the list can show: on a writer, category or topic page only its stories.
+const stripDays = computed(() => (scoped.value ? dayMap(posts.filter(inScope), []) : byDay))
+// A day with nothing on it (an old or hand-typed link) counts as no day.
+const day = computed(() => (stripDays.value.has(String(route.query.day)) ? String(route.query.day) : ''))
+const hasFilter = computed(() => Boolean(q.value || scoped.value || day.value))
+// Typing a search or picking a day keeps the banner, so nothing above the field or the calendar moves.
+const showBanner = computed(() => !scoped.value)
 const authorEntry = computed(() => usedAuthors.find((a) => a.key === author.value))
 
 function setQuery(patch) {
@@ -27,24 +37,36 @@ function setQuery(patch) {
   router.replace({ path: '/', query: next })
 }
 
-const filtered = computed(() => {
-  const needle = q.value.trim().toLowerCase()
-  return posts.filter((p) => {
-    if (author.value && p.authorKey !== author.value) return false
-    if (category.value && p.category !== category.value) return false
-    if (tag.value && !p.tags.includes(tag.value)) return false
-    if (needle) {
+const needle = computed(() => q.value.trim().toLowerCase())
+const filtered = computed(() =>
+  posts.filter((p) => {
+    if (!inScope(p)) return false
+    if (day.value && p.date !== day.value) return false
+    if (needle.value) {
       const hay = [p.title, p.summary, p.author.name, p.categoryLabel, ...p.tags].join(' ').toLowerCase()
-      if (!hay.includes(needle)) return false
+      if (!hay.includes(needle.value)) return false
     }
     return true
-  })
-})
+  }),
+)
+// A picked day lists what shipped too, after its stories (a writer, category or topic has no releases).
+const dayReleases = computed(() =>
+  day.value && !scoped.value
+    ? releases.filter((r) => r.date === day.value && (!needle.value || [r.title, r.summary, r.product.name, r.version].join(' ').toLowerCase().includes(needle.value)))
+    : [],
+)
+const count = (n, one, many) => `${n} ${n === 1 ? one : many}`
+const countText = computed(() =>
+  [filtered.value.length || !dayReleases.value.length ? count(filtered.value.length, 'story', 'stories') : '', dayReleases.value.length ? count(dayReleases.value.length, 'release', 'releases') : '']
+    .filter(Boolean)
+    .join(', '),
+)
 
 const filterLabel = computed(() => {
   if (author.value) return authorEntry.value?.name || author.value
   if (category.value) return usedCategories.find((c) => c.key === category.value)?.label || category.value
   if (tag.value) return `#${tag.value}`
+  if (day.value) return longDate(day.value, { weekday: 'long', month: 'short', day: 'numeric' })
   if (q.value) return `“${q.value}”`
   return ''
 })
@@ -62,17 +84,20 @@ const filterLabel = computed(() => {
 
   <div class="home wrap">
     <aside class="rail">
-      <ActivityCalendar />
+      <ActivityCalendar :day="day" @pick="(k) => setQuery({ day: k })" />
     </aside>
 
     <div class="feed">
-      <div class="label">
+      <DayStrip :days="stripDays" :day="day" @pick="(k) => setQuery({ day: k })" />
+
+      <div class="label" :class="{ quiet: showBanner }">
         <Avatar v-if="authorEntry" :author="authorEntry" size="m" />
         <div>
           <h2>{{ hasFilter ? filterLabel : 'Latest stories' }}</h2>
           <div v-if="hasFilter" class="label-meta">
-            <span>{{ filtered.length }} {{ filtered.length === 1 ? 'story' : 'stories' }}</span>
-            <button class="clear" type="button" @click="router.replace({ path: '/' })"><Icon name="close" :size="14" />Clear</button>
+            <span>{{ countText }}</span>
+            <button v-if="scoped && day" class="clear day-clear" type="button" aria-label="Clear day" @click="setQuery({ day: '' })"><Icon name="close" :size="14" />{{ longDate(day, { month: 'short', day: 'numeric' }) }}</button>
+            <button class="clear" type="button" aria-label="Clear filters" @click="router.replace({ path: '/' })"><Icon name="close" :size="14" />Clear</button>
           </div>
         </div>
       </div>
@@ -86,11 +111,12 @@ const filterLabel = computed(() => {
       </div>
 
       <PostCard v-for="p in filtered" :key="p.slug" :post="p" />
-      <p v-if="filtered.length === 0" class="empty">No stories match.</p>
-
-      <div class="rail-inline">
-        <ActivityCalendar />
-      </div>
+      <router-link v-for="r in dayReleases" :key="r.slug" class="day-rel" :to="`/releases/${r.slug}`" @pointerenter="r.loadHtml()" @focusin="r.loadHtml()">
+        <Icon :name="r.product.icon || 'releases'" :size="20" />
+        <span class="m"><span class="v">{{ releaseLabel(r) }}</span> <span v-if="r.type !== 'release'" class="chip filled" :class="`type-${r.type}`">{{ r.typeLabel }}</span></span>
+        <span class="t">{{ r.title }}</span>
+      </router-link>
+      <p v-if="!filtered.length && !dayReleases.length" class="empty">No stories match.</p>
 
       <section class="browse">
         <h3>Categories</h3>

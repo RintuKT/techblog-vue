@@ -150,8 +150,6 @@ a, button, label, select, input { touch-action: manipulation; }
 /* Home grid: a left rail (the calendar) that stays in view, the feed, and Featured on the right */
 .home { display: grid; grid-template-columns: 256px minmax(0, 1fr) 240px; grid-template-areas: "rail feed side"; gap: 0 40px; padding-block: 44px 80px; }
 .rail { grid-area: rail; display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; align-self: start; position: sticky; top: calc(var(--header-h) + 20px); min-width: 0; }
-/* The phone copy of the calendar, after the stories; only one of the two shows at a time */
-.rail-inline { display: none; grid-template-columns: minmax(0, 1fr); gap: 28px; max-width: 380px; margin-top: 36px; }
 .home .label { display: flex; align-items: center; gap: 14px; min-height: 40px; margin-bottom: 18px; }
 .home .label > div { min-width: 0; }
 .home .label h2 { margin: 0; font-size: 22px; font-weight: 600; line-height: 1.25; letter-spacing: -0.01em; overflow-wrap: anywhere; }
@@ -198,14 +196,17 @@ a, button, label, select, input { touch-action: manipulation; }
 .cal-item .v { flex: none; font-family: var(--mono); font-size: 12px; color: var(--fg-2); }
 .cal-item .t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (hover: hover) { .cal-item:hover .t { text-decoration: underline; text-underline-offset: 3px; } }
-/* A new month shows at once (the old one is gone the same frame) and only eases in a few pixels */
-.cal-next-leave-active, .cal-prev-leave-active { display: none; }
-.cal-next-enter-active, .cal-prev-enter-active { transition: opacity 0.16s ease-out, transform 0.16s ease-out; }
+/* A new month (or week) shows at once (the old one is gone the same frame) and only eases in a few pixels;
+   the phone strip opening into its month, or folding back, eases down the same way */
+.cal-next-leave-active, .cal-prev-leave-active, .cal-open-leave-active { display: none; }
+.cal-next-enter-active, .cal-prev-enter-active, .cal-open-enter-active { transition: opacity 0.16s ease-out, transform 0.16s ease-out; }
 .cal-next-enter-from { opacity: 0; transform: translateX(8px); }
 .cal-prev-enter-from { opacity: 0; transform: translateX(-8px); }
+.cal-open-enter-from { opacity: 0; transform: translateY(-4px); }
 @media (prefers-reduced-motion: reduce) {
-  .cal-next-enter-active, .cal-prev-enter-active { transition: none; }
+  .cal-next-enter-active, .cal-prev-enter-active, .cal-open-enter-active { transition: none; }
 }
+.dstrip { display: none; }
 
 /* Filters: search field + pill selects */
 .filters { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
@@ -231,7 +232,7 @@ a, button, label, select, input { touch-action: manipulation; }
 .card h2 a::after, .rel h2 a::after { content: ""; position: absolute; inset: 0; }
 .card .who a, .card .foot a, .rel-chips a, .rel-foot a, .rel .strip { position: relative; z-index: 1; }
 @media (hover: none) {
-  .card:active, .rel:active { opacity: 0.7; transition: none; }
+  .card:active, .rel:active, .day-rel:active { opacity: 0.7; transition: none; }
 }
 .card:first-of-type { padding-top: 16px; }
 .card .who { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--fg-2); margin-bottom: 10px; white-space: nowrap; min-width: 0; }
@@ -244,6 +245,15 @@ a, button, label, select, input { touch-action: manipulation; }
 .card .foot { display: flex; align-items: center; gap: 14px; margin-top: 16px; font-size: 13px; color: var(--fg-2); white-space: nowrap; }
 .card .thumb-wrap { display: block; }
 .card .thumb { width: 160px; max-width: none; height: 107px; object-fit: cover; border-radius: 8px; background: var(--bg-elev); }
+/* A picked day's releases follow its stories, one quiet row each (the app, its version, the title); the row is the link */
+.day-rel { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 14px; padding: 18px 0; border-bottom: 1px solid var(--line); transition: opacity 0.15s ease; }
+.filters + .day-rel { padding-top: 16px; }
+.day-rel .icon { grid-row: span 2; margin-top: 1px; color: var(--fg-2); }
+.day-rel .m { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.day-rel .v { font-family: var(--mono); font-size: 12px; color: var(--fg-2); white-space: nowrap; }
+.day-rel .chip { font-size: 11px; padding: 1px 8px; }
+.day-rel .t { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 17px; font-weight: 700; line-height: 1.3; letter-spacing: -0.01em; }
+@media (hover: hover) { .day-rel:hover .t { text-decoration: underline; text-underline-offset: 3px; } }
 .chip { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--fg); background: var(--chip-bg); border: 1px solid var(--line-2); border-radius: 999px; padding: 4px 12px; line-height: 1.4; white-space: nowrap; }
 @media (hover: hover) { .chip:hover { border-color: var(--fg-3); } }
 .chip.filled { background: var(--bg-elev); border-color: transparent; color: var(--fg-2); }
@@ -437,12 +447,31 @@ img.avatar { background: var(--bg-elev); }
   .rel { grid-template-columns: 120px minmax(0, 1fr); gap: 0 20px; }
 }
 
-/* Narrow phones: one column; the calendar follows the stories (PostList renders it there) */
+/* Narrow phones: one column; the calendar heads the feed as a flat week strip (DayStrip) that picks the day it shows */
 @media (max-width: 679px) {
   .rail { display: none; }
-  .rail-inline { display: grid; }
   .home { grid-template-columns: minmax(0, 1fr); grid-template-areas: "feed"; grid-template-rows: none; }
   .sidebar { display: none; }
+  /* The banner already heads the list (all stories, a search, a day), so the title row shows only for a writer, category or topic */
+  .home .label.quiet { display: none; }
+  .dstrip { display: block; margin-bottom: 16px; }
+  .dstrip .cal-head { height: 40px; margin: 0; padding: 0; }
+  .ds-title { display: inline-flex; align-items: center; gap: 6px; height: 40px; font-size: 16px; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; }
+  .ds-title .ds-y { font-weight: 400; color: var(--fg-3); }
+  .ds-title .icon { color: var(--fg-3); transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1); }
+  .ds-title[aria-expanded="true"] .icon { transform: rotate(180deg); }
+  .ds-title:active { transform: scale(0.96); }
+  /* Finger-sized arrows, pulled out so the chevron lines up with the gutter */
+  .dstrip .cal-nav { margin-right: -11px; }
+  .dstrip .cal-nav .icon-btn { width: 40px; height: 40px; }
+  .dstrip .cal-nav .icon-btn[aria-disabled="true"], .dstrip .cal-nav .icon-btn[aria-disabled="true"]:active { opacity: 0.3; cursor: default; background: none; transform: none; }
+  /* The strip's caption already shows a picked day on phones */
+  .home .label .day-clear { display: none; }
+  .dstrip .cal-day { max-width: 44px; height: 46px; }
+  .ds-pick { display: flex; align-items: center; justify-content: space-between; height: 40px; font-size: 13px; font-weight: 500; color: var(--fg-2); }
+  .ds-pick .clear { display: inline-flex; align-items: center; gap: 4px; align-self: stretch; padding-left: 16px; font-weight: 400; color: var(--fg-2); }
+  @media (hover: hover) { .ds-pick .clear:hover { color: var(--fg); } }
+  @media (prefers-reduced-motion: reduce) { .ds-title .icon { transition: none; } }
 }
 
 /* Phones */
@@ -463,9 +492,6 @@ img.avatar { background: var(--bg-elev); }
   .tabbar-line { position: absolute; top: -1px; left: 0; width: calc(100% / var(--n)); height: 2px; pointer-events: none; translate: calc(var(--i) * 100%) 0; }
   .tabbar-line::before { content: ""; display: block; width: 24px; height: 100%; margin: 0 auto; border-radius: 0 0 2px 2px; background: var(--fg); }
   .tabbar-line.moves { transition: translate 0.3s cubic-bezier(0.25, 1, 0.5, 1); }
-  /* The calendar after the stories uses the full width, with roomier days */
-  .rail-inline { max-width: none; }
-  .rail-inline .cal-day { max-width: 44px; height: 46px; }
   body:has(.search input:focus) .tabbar { display: none; }
 
   .pub-banner { padding-top: 32px; }
