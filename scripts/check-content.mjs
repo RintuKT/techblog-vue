@@ -14,7 +14,7 @@ let errors = 0
 const fail = (file, msg) => { errors++; console.error(`  ✗ ${file}: ${msg}`) }
 
 for (const [key, a] of Object.entries(authors)) {
-  if (a?.avatar && !/^https?:\/\//.test(String(a.avatar))) fail('authors.yaml', `avatar for "${key}" must be a remote URL`)
+  if (a?.avatar && !/^(https?:\/\/|\/)/.test(String(a.avatar))) fail('authors.yaml', `avatar for "${key}" must be a remote URL or a path from public/ (like /writers/name.svg)`)
 }
 
 function frontMatter(file, text) {

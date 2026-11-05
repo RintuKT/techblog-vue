@@ -27,6 +27,9 @@
   --glass-shadow-s: 0 2px 12px rgb(0 0 0 / 0.3);
   --glass-blur: saturate(1.6) blur(20px);
   --tab-lens: rgb(255 255 255 / 0.12);
+  --tabbar-bg: rgb(18 18 18 / 0.86);
+  --mono-top: #77777c;
+  --mono-bottom: #545458;
 
   --w-site: 1192px;
   --w-read: 680px;
@@ -58,6 +61,9 @@
   --glass-shadow: 0 8px 32px rgb(0 0 0 / 0.07);
   --glass-shadow-s: 0 2px 12px rgb(0 0 0 / 0.05);
   --tab-lens: rgb(0 0 0 / 0.06);
+  --tabbar-bg: rgb(255 255 255 / 0.88);
+  --mono-top: #a8a8ad;
+  --mono-bottom: #85858a;
 
   color-scheme: light;
 }
@@ -95,7 +101,7 @@ a, button, label, select, input { touch-action: manipulation; }
 /* A pressed control gives a small, quick squeeze */
 :is(.tab, .tabbar a, .icon-btn, .cal-day.active, a.chip, .pill, .ext, .fsel, .search-clear):active { transform: scale(0.96); }
 @media (prefers-reduced-motion: reduce) {
-  .nav-pill.moves { transition: none; }
+  .nav-pill.moves, .tabbar-line.moves { transition: none; }
 }
 .icon-btn.theme-btn { flex: none; position: relative; width: 38px; height: 38px; }
 @media (hover: hover) { .icon-btn.theme-btn:hover { color: var(--fg); } }
@@ -252,13 +258,10 @@ a, button, label, select, input { touch-action: manipulation; }
 
 /* Avatar: a photo when authors.yaml has one, otherwise the writer's own monochrome mark (see Avatar.vue) */
 .avatar { border-radius: 50%; display: inline-grid; place-items: center; flex: none; overflow: hidden; object-fit: cover; }
-.avatar.mark { background: var(--bg-elev); box-shadow: inset 0 0 0 1px var(--line-2); }
-.avatar.mark svg { width: 100%; height: 100%; }
-.m-disc { fill: var(--line-2); }
-.m-bar { fill: var(--fg-3); }
-.m-dot { fill: var(--fg); }
+/* Monogram: white initials on a soft grey gradient with a fine edge, like a contact card */
+.avatar.mono { color: #fff; background: linear-gradient(180deg, var(--mono-top), var(--mono-bottom)); box-shadow: inset 0 0 0 0.5px rgb(0 0 0 / 0.12), inset 0 1px 0 rgb(255 255 255 / 0.18); font-family: ui-rounded, -apple-system, BlinkMacSystemFont, "SF Pro Rounded", var(--sans); font-weight: 600; letter-spacing: 0.02em; line-height: 1; user-select: none; }
 img.avatar { background: var(--bg-elev); }
-.avatar.s { width: 24px; height: 24px; font-size: 10px; }
+.avatar.s { width: 24px; height: 24px; font-size: 9.5px; }
 .avatar.m { width: 40px; height: 40px; font-size: 15px; }
 .avatar.l { width: 56px; height: 56px; font-size: 20px; }
 
@@ -450,11 +453,19 @@ img.avatar { background: var(--bg-elev); }
   .brand { font-size: 18px; }
   .nav { display: none; }
   .theme-btn { margin-left: auto; }
-  /* A flat bottom bar in the Substack way: full width, a hairline on top, small icons with small labels.
-     The current tab is simply darker (with a bolder icon); it switches on press. */
-  .tabbar { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; position: fixed; z-index: 20; left: 0; right: 0; bottom: 0; height: calc(var(--tabbar-h) + env(safe-area-inset-bottom)); padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); background: var(--glass-bar); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); border: 0; border-top: 1px solid var(--glass-line); border-radius: 0; box-shadow: none; }
+  /* A flat bottom bar in the Substack way: full width with a hairline on top, clean frosted glass (no colour boost,
+     so pictures passing under it leave no tint), small icons and labels kept to a phone-wide group in the middle.
+     The current tab is darker, with a short line above it that glides between tabs (translate only). */
+  .tabbar { display: block; position: fixed; z-index: 20; left: 0; right: 0; bottom: 0; height: calc(var(--tabbar-h) + env(safe-area-inset-bottom)); padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); background: var(--tabbar-bg); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); border: 0; border-top: 1px solid var(--glass-line); border-radius: 0; box-shadow: none; }
+  .tabbar-in { position: relative; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); max-width: 440px; height: 100%; margin: 0 auto; }
   .tabbar a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 10px; font-weight: 500; color: var(--fg-3); transition: color 0.12s ease; }
   .tabbar a.on { color: var(--fg); }
+  .tabbar-line { position: absolute; top: -1px; left: 0; width: calc(100% / var(--n)); height: 2px; pointer-events: none; translate: calc(var(--i) * 100%) 0; }
+  .tabbar-line::before { content: ""; display: block; width: 24px; height: 100%; margin: 0 auto; border-radius: 0 0 2px 2px; background: var(--fg); }
+  .tabbar-line.moves { transition: translate 0.3s cubic-bezier(0.25, 1, 0.5, 1); }
+  /* The calendar after the stories uses the full width, with roomier days */
+  .rail-inline { max-width: none; }
+  .rail-inline .cal-day { max-width: 44px; height: 46px; }
   body:has(.search input:focus) .tabbar { display: none; }
 
   .pub-banner { padding-top: 32px; }
