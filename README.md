@@ -1,6 +1,6 @@
 # Eduport Tech Blog
 
-Internal engineering blog. Posts are Markdown files in this repo; the site is a static Vue 3 app built with Vite. No database, no backend, no login layer: host the `dist/` folder somewhere only the organization can reach (VPN, internal S3 bucket, GitHub Pages on a private repo, etc.).
+The public Eduport engineering blog. Posts are Markdown files in this repo; the site is a static Vue 3 app built with Vite. No database, no backend: every page is pre-rendered to HTML at build time, so search engines and AI agents read it in full.
 
 ## Run locally
 
@@ -8,7 +8,7 @@ Internal engineering blog. Posts are Markdown files in this repo; the site is a 
 npm install
 npm run dev        # http://localhost:5180
 npm run check      # validates front matter, authors, categories, image URLs
-npm run build      # runs the check, then outputs dist/
+npm run build      # runs the check, builds the app, pre-renders every page into dist/
 ```
 
 ## Write a post
@@ -91,6 +91,21 @@ src/
 public/              favicon-32.png and apple-touch-icon.png, served as-is
 ```
 
-## Deploying internally
+## Deploying
 
-`npm run build` produces a fully static `dist/`. Routing uses hash URLs (`/#/post/...`), so any static file host works without rewrite rules. A GitHub Action or CI job that runs `npm ci && npm run build` on push to `main` and syncs `dist/` to your internal host is all the automation needed.
+`npm run build` produces a fully static `dist/` with one HTML file per page (`/post/<slug>/index.html`, `/releases/<slug>/index.html`, ...), plus `404.html`. Any static host that serves a folder's `index.html` for its path works (Cloudflare Pages, Netlify, Vercel, GitHub Pages, S3 + CloudFront); point unknown paths at `404.html`.
+
+The public address defaults to `https://tech.eduport.app`. To use another, build with `VITE_SITE_URL=https://blog.example.com npm run build`; canonical links, the sitemap, the feed and the structured data all follow it.
+
+## Search engines and AI agents
+
+The build writes, for every page: a title, description, canonical link, Open Graph and Twitter tags, and schema.org data (`WebSite` and `Blog` on the home page, `BlogPosting` for stories, `TechArticle` for releases, breadcrumbs). It also writes:
+
+| File | For |
+|---|---|
+| `sitemap.xml` | every page with its date; submit it in Google Search Console and Bing Webmaster Tools |
+| `robots.txt` | allows all crawlers, with Google, Bing and the AI crawlers (ChatGPT, Claude, Perplexity, Gemini, Apple) named |
+| `feed.xml` | RSS feed of stories |
+| `llms.txt`, `llms-full.txt` | a plain-text map of the blog and the full text of every post and release, for AI agents |
+
+Page titles and descriptions come from each post's `title` and `summary`, so a clear summary is the best thing a writer can do for search.

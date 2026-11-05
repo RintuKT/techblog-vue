@@ -7,7 +7,7 @@
     "dev": "vite",
     "check": "node scripts/check-content.mjs",
     "prebuild": "node scripts/check-content.mjs",
-    "build": "vite build",
+    "build": "vite build && vite build --ssr src/entry-server.js --outDir dist-ssr && node scripts/prerender.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -15,6 +15,14 @@ export function slugFromPath(path) {
 
 const readingMinutes = (words) => Math.max(1, Math.round(words / 220))
 
+/** Wraps a body loader so the body is fetched once; .now() gives it without waiting once it is in. */
+export function cachedBody(load) {
+  let html
+  const get = () => (html !== undefined ? Promise.resolve(html) : load().then((h) => (html = h)))
+  get.now = () => html
+  return get
+}
+
 export const posts = Object.entries(rawPosts)
   .map(([path, { meta, words }]) => {
     const authorKey = meta.author || ''
@@ -34,7 +42,7 @@ export const posts = Object.entries(rawPosts)
       featured: meta.featured === true,
       draft: meta.draft === true,
       minutes: readingMinutes(words),
-      loadHtml: bodies[path],
+      loadHtml: cachedBody(bodies[path]),
     }
   })
   .filter((p) => !p.draft || import.meta.env.DEV)

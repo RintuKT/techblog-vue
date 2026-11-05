@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { posts, usedAuthors, usedCategories, allTags, tagCounts, featuredPosts, formatDate } from '../lib/content.js'
 import PostCard from '../components/PostCard.vue'
@@ -7,13 +7,8 @@ import Avatar from '../components/Avatar.vue'
 import Icon from '../components/Icon.vue'
 import ActivityCalendar from '../components/ActivityCalendar.vue'
 
-// The calendar sits in a left rail wherever there is room; on phones it follows the stories.
-const wideQuery = matchMedia('(min-width: 680px)')
-const wide = ref(wideQuery.matches)
-const onWide = (e) => { wide.value = e.matches }
-onMounted(() => wideQuery.addEventListener('change', onWide))
-onBeforeUnmount(() => wideQuery.removeEventListener('change', onWide))
-
+// The calendar sits in a left rail wherever there is room; on phones the copy after the stories shows instead
+// (style.css picks one), so the page renders the same everywhere, including at build time.
 const route = useRoute()
 const router = useRouter()
 
@@ -66,7 +61,7 @@ const filterLabel = computed(() => {
   </section>
 
   <div class="home wrap">
-    <aside v-if="wide" class="rail">
+    <aside class="rail">
       <ActivityCalendar />
     </aside>
 
@@ -93,7 +88,7 @@ const filterLabel = computed(() => {
       <PostCard v-for="p in filtered" :key="p.slug" :post="p" />
       <p v-if="filtered.length === 0" class="empty">No stories match.</p>
 
-      <div v-if="!wide" class="rail-inline">
+      <div class="rail-inline">
         <ActivityCalendar />
       </div>
 

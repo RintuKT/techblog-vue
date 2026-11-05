@@ -4,11 +4,13 @@ const KEY = 'techblog.theme'
 // Same values as --bg in style.css; kept here so switching never forces a style recalculation.
 const BG = { dark: '#121212', light: '#ffffff' }
 function initial() {
+  if (typeof document === 'undefined') return 'dark'
   try { const v = localStorage.getItem(KEY); if (v === 'light' || v === 'dark') return v } catch {}
   return 'dark'
 }
 export const theme = ref(initial())
-watchEffect(() => {
+// In the browser only (the build also renders pages, where there is no document).
+if (typeof document !== 'undefined') watchEffect(() => {
   document.documentElement.dataset.theme = theme.value
   // Phone browser chrome follows the page background.
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', BG[theme.value])

@@ -85,7 +85,6 @@ a, button, label, select, input { touch-action: manipulation; }
 .site-header .wrap { display: flex; align-items: center; gap: 10px; height: var(--header-h); }
 .brand { font-weight: 700; font-size: 20px; letter-spacing: -0.02em; display: flex; align-items: center; gap: 10px; white-space: nowrap; flex: none; }
 .brand .mark { width: 28px; height: 28px; border-radius: 7px; }
-.brand small { font-size: 11px; font-weight: 500; color: var(--fg-3); border: 1px solid var(--line-2); border-radius: 999px; padding: 1px 8px; letter-spacing: 0.02em; text-transform: uppercase; }
 /* Header nav, the Substack way: plain text tabs; the current one is darker with a thin line under it that sits on the
    header's bottom edge and glides between tabs (transform only, from the index in --i). Equal tabs, so nothing shifts. */
 .nav { position: relative; align-self: stretch; margin-left: auto; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; font-size: 14px; font-weight: 500; color: var(--fg-3); white-space: nowrap; }
@@ -98,7 +97,7 @@ a, button, label, select, input { touch-action: manipulation; }
 @media (prefers-reduced-motion: reduce) {
   .nav-pill.moves { transition: none; }
 }
-.icon-btn.theme-btn { flex: none; position: relative; width: 38px; height: 38px; margin-left: 8px; }
+.icon-btn.theme-btn { flex: none; position: relative; width: 38px; height: 38px; }
 @media (hover: hover) { .icon-btn.theme-btn:hover { color: var(--fg); } }
 /* Glass controls share one look: a soft grey glass well, the hairline edge and a glint of light along the top */
 .track, .search input, .fsel, .tabbar { background: var(--glass-track); border: 1px solid var(--glass-line); box-shadow: inset 0 1px 0 var(--glass-hi); }
@@ -145,7 +144,8 @@ a, button, label, select, input { touch-action: manipulation; }
 /* Home grid: a left rail (the calendar) that stays in view, the feed, and Featured on the right */
 .home { display: grid; grid-template-columns: 256px minmax(0, 1fr) 240px; grid-template-areas: "rail feed side"; gap: 0 40px; padding-block: 44px 80px; }
 .rail { grid-area: rail; display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; align-self: start; position: sticky; top: calc(var(--header-h) + 20px); min-width: 0; }
-.rail-inline { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; max-width: 380px; margin-top: 36px; }
+/* The phone copy of the calendar, after the stories; only one of the two shows at a time */
+.rail-inline { display: none; grid-template-columns: minmax(0, 1fr); gap: 28px; max-width: 380px; margin-top: 36px; }
 .home .label { display: flex; align-items: center; gap: 14px; min-height: 40px; margin-bottom: 18px; }
 .home .label > div { min-width: 0; }
 .home .label h2 { margin: 0; font-size: 22px; font-weight: 600; line-height: 1.25; letter-spacing: -0.01em; overflow-wrap: anywhere; }
@@ -436,6 +436,8 @@ img.avatar { background: var(--bg-elev); }
 
 /* Narrow phones: one column; the calendar follows the stories (PostList renders it there) */
 @media (max-width: 679px) {
+  .rail { display: none; }
+  .rail-inline { display: grid; }
   .home { grid-template-columns: minmax(0, 1fr); grid-template-areas: "feed"; grid-template-rows: none; }
   .sidebar { display: none; }
 }
@@ -446,7 +448,7 @@ img.avatar { background: var(--bg-elev); }
 
   .site-header { position: static; background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; }
   .brand { font-size: 18px; }
-  .brand small, .nav { display: none; }
+  .nav { display: none; }
   .theme-btn { margin-left: auto; }
   /* A flat bottom bar in the Substack way: full width, a hairline on top, small icons with small labels.
      The current tab is simply darker (with a bolder icon); it switches on press. */
@@ -556,3 +558,7 @@ img.avatar { background: var(--bg-elev); }
   .post .byline .name, .author-card .name { padding-block: 8px; }
   .eyebrow { padding-block: 10px; margin-block: -10px 2px; }
 }
+
+/* Page not found */
+.not-found { padding-block: 64px 96px; }
+.not-found p { color: var(--fg-2); margin: 0 0 24px; }

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch, watchEffect } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { findPost, relatedPosts, formatDate } from '../lib/content.js'
 import Avatar from '../components/Avatar.vue'
 
@@ -8,17 +8,15 @@ const post = computed(() => findPost(props.slug))
 const related = computed(() => (post.value ? relatedPosts(post.value, 3) : []))
 const authorLink = computed(() => ({ path: '/', query: { author: post.value?.authorKey } }))
 
-// The body is its own chunk, usually fetched already when the card was hovered or touched.
+// The body is its own chunk, usually fetched already (on page load, or when the card was hovered or touched).
 const html = ref('')
 watch(post, async (p) => {
-  html.value = ''
-  const body = p ? await p.loadHtml() : ''
+  const ready = p?.loadHtml.now()
+  html.value = ready ?? ''
+  if (!p || ready !== undefined) return
+  const body = await p.loadHtml()
   if (post.value === p) html.value = body
 }, { immediate: true })
-
-watchEffect(() => {
-  document.title = post.value ? `${post.value.title} · Eduport Tech Blog` : 'Eduport Tech Blog'
-})
 
 </script>
 

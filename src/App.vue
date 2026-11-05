@@ -41,7 +41,7 @@ onMounted(() => router.isReady().then(() => requestAnimationFrame(() => { pillMo
 <template>
   <header class="site-header">
     <div class="wrap">
-      <router-link to="/" class="brand"><img class="mark" :src="logo" alt="" />Eduport Tech <small>internal</small></router-link>
+      <router-link to="/" class="brand"><img class="mark" :src="logo" alt="Eduport" width="28" height="28" />Eduport Tech</router-link>
       <nav class="nav" aria-label="Sections" :style="{ '--n': sections.length, '--i': pillAt }">
         <span v-show="pillAt >= 0" class="nav-pill" :class="{ moves: pillMoves }" aria-hidden="true"></span>
         <router-link v-for="(s, i) in sections" :key="s.to" :to="s.to" :class="{ on: i === pillAt }" @pointerdown="press(i, $event)">{{ s.label }}</router-link>

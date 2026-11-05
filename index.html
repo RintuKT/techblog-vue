@@ -8,11 +8,12 @@
       // The saved theme applies before the first paint (theme.js takes over once the app loads)
       try { if (localStorage.getItem('techblog.theme') === 'light') { document.documentElement.dataset.theme = 'light'; document.querySelector('meta[name="theme-color"]').content = '#ffffff' } } catch (e) {}
     </script>
-    <meta name="robots" content="noindex, nofollow" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="manifest" href="/site.webmanifest" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="preconnect" href="https://assets.eduport.app" />
     <title>Eduport Tech Blog</title>
+    <!--app-head-->
   </head>
   <body>
     <div id="app"></div>

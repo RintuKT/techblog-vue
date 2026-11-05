@@ -1,4 +1,4 @@
-import { slugFromPath, authors } from './content.js'
+import { slugFromPath, authors, cachedBody } from './content.js'
 
 // Parsed at build time, like the posts (scripts/vite-content.mjs): front matter is bundled, each body is
 // its own chunk fetched when the release is opened.
@@ -55,7 +55,7 @@ export const releases = Object.entries(rawReleases)
       author: authorKey ? authors[authorKey] || { name: authorKey } : null,
       draft: meta.draft === true,
       hasBody: words > 0,
-      loadHtml: bodies[path],
+      loadHtml: cachedBody(bodies[path]),
     }
   })
   .filter((r) => !r.draft || import.meta.env.DEV)

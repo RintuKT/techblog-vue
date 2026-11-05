@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch, watchEffect } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { findRelease, releases } from '../lib/releases.js'
 import { formatDate } from '../lib/content.js'
 import ScreenStrip from '../components/ScreenStrip.vue'
@@ -16,13 +16,12 @@ const siblings = computed(() => {
 // The notes are their own chunk, fetched on open (or when the card was hovered or touched).
 const html = ref('')
 watch(rel, async (r) => {
-  html.value = ''
-  const body = r ? await r.loadHtml() : ''
+  const ready = r?.loadHtml.now()
+  html.value = ready ?? ''
+  if (!r || ready !== undefined) return
+  const body = await r.loadHtml()
   if (rel.value === r) html.value = body
 }, { immediate: true })
-watchEffect(() => {
-  document.title = rel.value ? `${rel.value.product.name} ${rel.value.version} · Eduport Tech Blog` : 'Eduport Tech Blog'
-})
 </script>
 
 <template>

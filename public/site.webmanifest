@@ -1,0 +1,10 @@
+{
+  "name": "Eduport Tech Blog",
+  "short_name": "Eduport Tech",
+  "description": "How the Eduport engineering team builds and runs the Eduport learning apps.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#121212",
+  "icons": [{ "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }]
+}
