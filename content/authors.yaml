@@ -1,7 +1,7 @@
 # One entry per author. The key is what posts reference in `author:`.
 # Add yourself here before publishing your first post.
-# Optional `badge:` (one short word, like TECH) and `color:` (a hex colour) give a writer a light badge:
-# a pale circle in that colour with a graduation cap and the word. Or `avatar:` for a square photo (a remote URL
+# Optional `badge:` (one short word, like TECH) and `color:` (a hex colour) give a writer a badge:
+# a graduation cap with the word under it, both in that colour. Or `avatar:` for a square photo (a remote URL
 # or a file in public/). With neither, the site shows the name's initials.
 tech-team:
   name: Eduport Tech Team

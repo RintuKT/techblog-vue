@@ -6,8 +6,8 @@ const props = defineProps({
   size: { type: String, default: 's' },
 })
 
-// A writer with a badge gets a light one: a pale circle in their colour, a graduation cap (the Eduport motif) and
-// their word under it (TECH, INFRA); the smallest size shows the cap alone. Without a badge or a photo, a monogram:
+// A writer with a badge gets a graduation cap (the Eduport motif) with their word under it (TECH, INFRA), both in
+// their colour and nothing else around them; the smallest size shows the cap alone. Without a badge or a photo, a monogram:
 // the initials of the first and last word of the name ("Team" left out), white on soft grey.
 const capSize = { s: 13, m: 18, l: 23 }
 const initials = computed(() => {
