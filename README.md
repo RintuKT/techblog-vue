@@ -93,9 +93,9 @@ public/              favicon-32.png and apple-touch-icon.png, served as-is
 
 ## Deploying
 
-`npm run build` produces a fully static `dist/` with one HTML file per page (`/post/<slug>/index.html`, `/releases/<slug>/index.html`, ...), plus `404.html`. Any static host that serves a folder's `index.html` for its path works (Cloudflare Pages, Netlify, Vercel, GitHub Pages, S3 + CloudFront); point unknown paths at `404.html`.
+`npm run build` produces a fully static `dist/` with one HTML file per page (`post/<slug>.html`, `releases/<slug>.html`, ...), plus `404.html`. Hosts that serve `name.html` at `/name` work as they are (Cloudflare Pages and Workers, Netlify, Vercel); point unknown paths at `404.html`.
 
-The public address defaults to `https://tech.eduport.app`. To use another, build with `VITE_SITE_URL=https://blog.example.com npm run build`; canonical links, the sitemap, the feed and the structured data all follow it.
+The public address is `https://techblog.eduport.in`. To use another, build with `VITE_SITE_URL=https://blog.example.com npm run build`; canonical links, the sitemap, the feed and the structured data all follow it.
 
 ## Search engines and AI agents
 

@@ -6,7 +6,7 @@ import { findRelease } from './releases.js'
 // in the browser, applyHead keeps it current as you move between pages.
 // Set VITE_SITE_URL at build time when the blog lives somewhere else.
 export const SITE = {
-  url: String(import.meta.env.VITE_SITE_URL || 'https://tech.eduport.app').replace(/\/$/, ''),
+  url: String(import.meta.env.VITE_SITE_URL || 'https://techblog.eduport.in').replace(/\/$/, ''),
   name: 'Eduport Tech Blog',
   alternateNames: ['Eduport Blog', 'Eduport Tech', 'Eduport Engineering Blog', 'Eduport Tech Team Blog'],
   description: 'The Eduport Tech Blog: how the Eduport engineering team builds and runs the Eduport learning apps, with stories, decisions and release notes for every Eduport app.',

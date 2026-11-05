@@ -21,7 +21,9 @@ async function write(file, text) {
   await writeFile(file, text)
 }
 
-for (const path of pages) await write(join(dist, path, 'index.html'), page(await render(path)))
+// /post/<slug> is written as post/<slug>.html: static hosts (Cloudflare included) serve it at the clean address
+// with no trailing-slash redirect, which is what the canonical links point at.
+for (const path of pages) await write(join(dist, path === '/' ? 'index.html' : `${path}.html`), page(await render(path)))
 await write(join(dist, '404.html'), page(await render('/404')))
 
 const url = (path) => SITE.url + (path === '/' ? '/' : path)
