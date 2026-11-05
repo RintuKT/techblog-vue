@@ -7,10 +7,12 @@
     "dev": "vite",
     "check": "node scripts/check-content.mjs",
     "prebuild": "node scripts/check-content.mjs",
-    "build": "vite build",
+    "build": "vite build && vite build --ssr src/entry-server.js --outDir dist-ssr && node scripts/prerender.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@hugeicons/core-free-icons": "^4.3.5",
+    "@hugeicons/vue": "^1.0.8",
     "js-yaml": "^4.1.0",
     "markdown-it": "^14.1.0",
     "vue": "^3.5.13",

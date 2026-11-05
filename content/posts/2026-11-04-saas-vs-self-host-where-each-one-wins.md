@@ -35,7 +35,7 @@ Our Postgres primary and replica run on RDS, two db.m6g.2xlarge instances. We co
 - **Continuous backup.** Transaction logs are shipped every five minutes, so point-in-time recovery is available to any second in the retention window. A bad migration at 7:42 PM can be rolled back to 7:41 PM.
 - **Automated failover.** With Multi-AZ, a hardware fault or an AZ problem promotes the standby in about a minute, with the same endpoint. No one has to be awake for it.
 - **Patching and minor upgrades** happen in a maintenance window we choose. Major-version upgrades are a tested path, not a weekend project.
-- **Storage that grows** without a resize outage, and monitoring (CloudWatch, Performance Insights) that we used directly in the [November 3 peak comparison](#/post/2026-11-04-db-cpu-per-request-fell-54-percent) to measure authentication attempts and CPU per request.
+- **Storage that grows** without a resize outage, and monitoring (CloudWatch, Performance Insights) that we used directly in the [November 3 peak comparison](/post/2026-11-04-db-cpu-per-request-fell-54-percent) to measure authentication attempts and CPU per request.
 
 **What self-hosting would mean:** writing and testing the WAL archiving, proving restores actually work every month, building the failover and the fencing so that two primaries never run at once, patching the OS and Postgres, and carrying the pager. That is a part-time person at minimum, and the first time a restore fails is the time it matters.
 

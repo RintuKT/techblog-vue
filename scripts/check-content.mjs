@@ -13,6 +13,10 @@ const products = load('products.yaml')
 let errors = 0
 const fail = (file, msg) => { errors++; console.error(`  ✗ ${file}: ${msg}`) }
 
+for (const [key, a] of Object.entries(authors)) {
+  if (a?.avatar && !/^https?:\/\//.test(String(a.avatar))) fail('authors.yaml', `avatar for "${key}" must be a remote URL`)
+}
+
 function frontMatter(file, text) {
   const m = /^---\s*\n([\s\S]*?)\n---\s*\n?([\s\S]*)$/.exec(text)
   if (!m) return fail(file, 'missing front matter (--- block)')

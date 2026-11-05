@@ -1,6 +1,6 @@
 # Eduport Tech Blog
 
-Internal engineering blog. Posts are Markdown files in this repo; the site is a static Vue 3 app built with Vite. No database, no backend, no login layer: host the `dist/` folder somewhere only the organization can reach (VPN, internal S3 bucket, GitHub Pages on a private repo, etc.).
+The public Eduport engineering blog. Posts are Markdown files in this repo; the site is a static Vue 3 app built with Vite. No database, no backend: every page is pre-rendered to HTML at build time, so search engines and AI agents read it in full.
 
 ## Run locally
 
@@ -8,7 +8,7 @@ Internal engineering blog. Posts are Markdown files in this repo; the site is a 
 npm install
 npm run dev        # http://localhost:5180
 npm run check      # validates front matter, authors, categories, image URLs
-npm run build      # runs the check, then outputs dist/
+npm run build      # runs the check, builds the app, pre-renders every page into dist/
 ```
 
 ## Write a post
@@ -42,9 +42,9 @@ Releases live in `content/releases/` and show on the Releases page, grouped by m
 | `version` | yes | App version, build number, or a date tag for dashboards |
 | `date` | yes | Release date, `YYYY-MM-DD` |
 | `title` | yes | What the release is about |
-| `type` | no | `release` (default), `major`, `hotfix`, `beta` |
+| `type` | no | `release` (default, shown without a label), `major`, `hotfix`, `beta` |
 | `summary` | yes | One or two sentences for the list |
-| `images` | no | List of `{url, caption}`; remote URLs only. Phone screenshots and desktop screenshots both work |
+| `images` | no | List of `{url, caption}`; remote URLs only. Phone screenshots and desktop screenshots both work; about 800px tall is plenty (bigger files only cost memory) |
 | `links` | no | List of `{label, url}`: store listing, release PR, ticket |
 | `author` | no | A key from `content/authors.yaml` |
 
@@ -59,6 +59,7 @@ your-key:
   name: Your Name
   role: Backend Engineer
   email: you@eduport.app
+  avatar: https://...   # optional, square photo; without it the site draws a mark from your name
 ```
 
 The Authors page and the author filter are generated from this file plus the posts that reference each key.
@@ -84,10 +85,27 @@ src/
   lib/theme.js       dark/light toggle (localStorage, defaults to dark)
   lib/releases.js    reads content/releases and content/products.yaml
   views/             PostList (home), PostView, ReleasesView, ReleaseView, AuthorsView
-  components/        PostCard, ReleaseCard, ScreenStrip, Avatar, Icon
-  style.css          the whole stylesheet; dark by default, light via the header toggle
+  components/        PostCard, ReleaseCard, ScreenStrip, Avatar, FilterSelect, Icon (Hugeicons)
+  assets/            eduport-logo.png, the header logo
+  style.css          the whole stylesheet; dark by default, light via the header toggle; phones get a bottom tab bar
+public/              favicon-32.png and apple-touch-icon.png, served as-is
 ```
 
-## Deploying internally
+## Deploying
 
-`npm run build` produces a fully static `dist/`. Routing uses hash URLs (`/#/post/...`), so any static file host works without rewrite rules. A GitHub Action or CI job that runs `npm ci && npm run build` on push to `main` and syncs `dist/` to your internal host is all the automation needed.
+`npm run build` produces a fully static `dist/` with one HTML file per page (`post/<slug>.html`, `releases/<slug>.html`, ...), plus `404.html`. Hosts that serve `name.html` at `/name` work as they are (Cloudflare Pages and Workers, Netlify, Vercel); point unknown paths at `404.html`.
+
+The public address is `https://techblog.eduport.in`. To use another, build with `VITE_SITE_URL=https://blog.example.com npm run build`; canonical links, the sitemap, the feed and the structured data all follow it.
+
+## Search engines and AI agents
+
+The build writes, for every page: a title, description, canonical link, Open Graph and Twitter tags, and schema.org data (`WebSite` and `Blog` on the home page, `BlogPosting` for stories, `TechArticle` for releases, breadcrumbs). It also writes:
+
+| File | For |
+|---|---|
+| `sitemap.xml` | every page with its date; submit it in Google Search Console and Bing Webmaster Tools |
+| `robots.txt` | allows all crawlers, with Google, Bing and the AI crawlers (ChatGPT, Claude, Perplexity, Gemini, Apple) named |
+| `feed.xml` | RSS feed of stories |
+| `llms.txt`, `llms-full.txt` | a plain-text map of the blog and the full text of every post and release, for AI agents |
+
+Page titles and descriptions come from each post's `title` and `summary`, so a clear summary is the best thing a writer can do for search.
