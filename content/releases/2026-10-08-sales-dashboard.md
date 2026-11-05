@@ -7,7 +7,7 @@ type: release
 author: tech-team
 summary: Every lead now shows its first and last touch source, and counsellors log call outcomes from the lead page.
 images:
-  - url: https://picsum.photos/seed/eduport-sales-a/1600/1000
+  - url: https://picsum.photos/seed/eduport-sales-a/1200/750
     caption: Lead page with attribution
 draft: false
 ---

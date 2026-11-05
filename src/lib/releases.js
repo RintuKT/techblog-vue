@@ -1,14 +1,12 @@
-import yaml from 'js-yaml'
-import { md, splitFrontMatter, slugFromPath, toDateString, authors } from './content.js'
+import { slugFromPath, authors } from './content.js'
 
-const rawReleases = import.meta.glob('/content/releases/*.md', {
-  query: '?raw',
-  import: 'default',
-  eager: true,
-})
-import productsRaw from '/content/products.yaml?raw'
+// Parsed at build time, like the posts (scripts/vite-content.mjs): front matter is bundled, each body is
+// its own chunk fetched when the release is opened.
+const rawReleases = import.meta.glob('/content/releases/*.md', { query: '?meta', import: 'default', eager: true })
+const bodies = import.meta.glob('/content/releases/*.md', { query: '?html', import: 'default' })
+import productsData from '/content/products.yaml?content'
 
-export const products = yaml.load(productsRaw) || {}
+export const products = productsData
 export const productList = Object.entries(products).map(([key, p]) => ({ key, ...p }))
 
 export const releaseTypes = {
@@ -16,6 +14,16 @@ export const releaseTypes = {
   major: 'Major change',
   hotfix: 'Hotfix',
   beta: 'Beta',
+}
+
+/** Brand icon for a release link, picked from its host; other links get the generic external arrow. */
+function linkIcon(url) {
+  let host = ''
+  try { host = new URL(url).hostname } catch {}
+  if (/(^|\.)apple\.com$/.test(host)) return 'apple'
+  if (host === 'play.google.com') return 'play-store'
+  if (/(^|\.)github\.com$/.test(host)) return 'github'
+  return ''
 }
 
 function normaliseImages(value) {
@@ -26,8 +34,7 @@ function normaliseImages(value) {
 }
 
 export const releases = Object.entries(rawReleases)
-  .map(([path, text]) => {
-    const { meta, body } = splitFrontMatter(text, path)
+  .map(([path, { meta, words }]) => {
     const productKey = String(meta.product || '')
     const product = products[productKey] || { name: productKey || 'Unknown', short: productKey, kind: '' }
     const authorKey = meta.author || ''
@@ -37,18 +44,18 @@ export const releases = Object.entries(rawReleases)
       productKey,
       product,
       version: meta.version != null ? String(meta.version) : '',
-      date: toDateString(meta.date),
+      date: String(meta.date || ''),
       title: meta.title || slugFromPath(path),
       type: releaseTypes[meta.type] ? meta.type : 'release',
       typeLabel: releaseTypes[meta.type] || releaseTypes.release,
       summary: meta.summary || '',
       images: normaliseImages(meta.images),
-      links: Array.isArray(meta.links) ? meta.links.filter((l) => l && l.url).map((l) => ({ label: l.label || l.url, url: l.url })) : [],
+      links: Array.isArray(meta.links) ? meta.links.filter((l) => l && l.url).map((l) => ({ label: l.label || l.url, url: l.url, icon: linkIcon(l.url) })) : [],
       authorKey,
       author: authorKey ? authors[authorKey] || { name: authorKey } : null,
       draft: meta.draft === true,
-      hasBody: body.trim().length > 0,
-      html: md.render(body),
+      hasBody: words > 0,
+      loadHtml: bodies[path],
     }
   })
   .filter((r) => !r.draft || import.meta.env.DEV)
@@ -60,10 +67,10 @@ export function findRelease(slug) {
 
 export const productCounts = productList.map((p) => ({ ...p, count: releases.filter((r) => r.productKey === p.key).length }))
 
+/** The newest release of each product, newest first. */
 export function latestPerProduct() {
-  return productList
-    .map((p) => releases.find((r) => r.productKey === p.key))
-    .filter(Boolean)
+  const seen = new Set()
+  return releases.filter((r) => !seen.has(r.productKey) && seen.add(r.productKey))
 }
 
 /** Group a release list by month, newest first. */

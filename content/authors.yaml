@@ -1,5 +1,6 @@
 # One entry per author. The key is what posts reference in `author:`.
 # Add yourself here before publishing your first post.
+# Optional `avatar:` is a remote URL to a square photo; without it the site draws a mark from the name.
 tech-team:
   name: Eduport Tech Team
   role: Engineering

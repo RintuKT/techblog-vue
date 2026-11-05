@@ -7,9 +7,9 @@ type: major
 author: tech-team
 summary: The learner home page is rebuilt around today's schedule, with continue-watching and pending assignments above the fold.
 images:
-  - url: https://picsum.photos/seed/eduport-web-dash-a/1600/1000
+  - url: https://picsum.photos/seed/eduport-web-dash-a/1200/750
     caption: Dashboard with today's schedule and continue watching
-  - url: https://picsum.photos/seed/eduport-web-dash-b/1600/1000
+  - url: https://picsum.photos/seed/eduport-web-dash-b/1200/750
     caption: Assignments panel
 draft: false
 ---

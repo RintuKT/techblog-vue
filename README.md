@@ -42,9 +42,9 @@ Releases live in `content/releases/` and show on the Releases page, grouped by m
 | `version` | yes | App version, build number, or a date tag for dashboards |
 | `date` | yes | Release date, `YYYY-MM-DD` |
 | `title` | yes | What the release is about |
-| `type` | no | `release` (default), `major`, `hotfix`, `beta` |
+| `type` | no | `release` (default, shown without a label), `major`, `hotfix`, `beta` |
 | `summary` | yes | One or two sentences for the list |
-| `images` | no | List of `{url, caption}`; remote URLs only. Phone screenshots and desktop screenshots both work |
+| `images` | no | List of `{url, caption}`; remote URLs only. Phone screenshots and desktop screenshots both work; about 800px tall is plenty (bigger files only cost memory) |
 | `links` | no | List of `{label, url}`: store listing, release PR, ticket |
 | `author` | no | A key from `content/authors.yaml` |
 
@@ -59,6 +59,7 @@ your-key:
   name: Your Name
   role: Backend Engineer
   email: you@eduport.app
+  avatar: https://...   # optional, square photo; without it the site draws a mark from your name
 ```
 
 The Authors page and the author filter are generated from this file plus the posts that reference each key.
@@ -84,8 +85,10 @@ src/
   lib/theme.js       dark/light toggle (localStorage, defaults to dark)
   lib/releases.js    reads content/releases and content/products.yaml
   views/             PostList (home), PostView, ReleasesView, ReleaseView, AuthorsView
-  components/        PostCard, ReleaseCard, ScreenStrip, Avatar, Icon
-  style.css          the whole stylesheet; dark by default, light via the header toggle
+  components/        PostCard, ReleaseCard, ScreenStrip, Avatar, FilterSelect, Icon (Hugeicons)
+  assets/            eduport-logo.png, the header logo
+  style.css          the whole stylesheet; dark by default, light via the header toggle; phones get a bottom tab bar
+public/              favicon-32.png and apple-touch-icon.png, served as-is
 ```
 
 ## Deploying internally

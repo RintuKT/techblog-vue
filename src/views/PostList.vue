@@ -1,11 +1,18 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { posts, usedAuthors, usedCategories, allTags, tagCounts, featuredPosts, formatDate } from '../lib/content.js'
 import PostCard from '../components/PostCard.vue'
 import Avatar from '../components/Avatar.vue'
-import { latestPerProduct } from '../lib/releases.js'
-const latestReleases = latestPerProduct()
+import Icon from '../components/Icon.vue'
+import ActivityCalendar from '../components/ActivityCalendar.vue'
+
+// The calendar sits in a left rail wherever there is room; on phones it follows the stories.
+const wideQuery = matchMedia('(min-width: 680px)')
+const wide = ref(wideQuery.matches)
+const onWide = (e) => { wide.value = e.matches }
+onMounted(() => wideQuery.addEventListener('change', onWide))
+onBeforeUnmount(() => wideQuery.removeEventListener('change', onWide))
 
 const route = useRoute()
 const router = useRouter()
@@ -15,6 +22,9 @@ const author = computed(() => String(route.query.author || ''))
 const category = computed(() => String(route.query.category || ''))
 const tag = computed(() => String(route.query.tag || ''))
 const hasFilter = computed(() => Boolean(q.value || author.value || category.value || tag.value))
+// Typing a search keeps the banner, so the field does not jump away from the cursor.
+const showBanner = computed(() => !author.value && !category.value && !tag.value)
+const authorEntry = computed(() => usedAuthors.find((a) => a.key === author.value))
 
 function setQuery(patch) {
   const next = { ...route.query, ...patch }
@@ -37,7 +47,7 @@ const filtered = computed(() => {
 })
 
 const filterLabel = computed(() => {
-  if (author.value) return usedAuthors.find((a) => a.key === author.value)?.name || author.value
+  if (author.value) return authorEntry.value?.name || author.value
   if (category.value) return usedCategories.find((c) => c.key === category.value)?.label || category.value
   if (tag.value) return `#${tag.value}`
   if (q.value) return `“${q.value}”`
@@ -46,9 +56,8 @@ const filterLabel = computed(() => {
 </script>
 
 <template>
-  <section class="pub-banner wrap" v-if="!hasFilter">
-    <h1>Eduport Tech Blog</h1>
-    <p>What we shipped, what we improved, what we tried, and what it cost. Written by the people who did the work.</p>
+  <section class="pub-banner wrap" v-if="showBanner">
+    <h1>Eduport Tech Blog. <span>What we build and learn.</span></h1>
     <div class="stats">
       <span><b>{{ posts.length }}</b>stories</span>
       <span><b>{{ usedAuthors.length }}</b>writers</span>
@@ -57,63 +66,56 @@ const filterLabel = computed(() => {
   </section>
 
   <div class="home wrap">
-    <div class="label">
-      <template v-if="hasFilter">{{ filterLabel }}<small>{{ filtered.length }} {{ filtered.length === 1 ? 'story' : 'stories' }} · <a href="#/" @click.prevent="router.replace({ path: '/' })">clear</a></small></template>
-      <template v-else>Latest stories</template>
-    </div>
+    <aside v-if="wide" class="rail">
+      <ActivityCalendar />
+    </aside>
 
     <div class="feed">
+      <div class="label">
+        <Avatar v-if="authorEntry" :author="authorEntry" size="m" />
+        <div>
+          <h2>{{ hasFilter ? filterLabel : 'Latest stories' }}</h2>
+          <div v-if="hasFilter" class="label-meta">
+            <span>{{ filtered.length }} {{ filtered.length === 1 ? 'story' : 'stories' }}</span>
+            <button class="clear" type="button" @click="router.replace({ path: '/' })"><Icon name="close" :size="14" />Clear</button>
+          </div>
+        </div>
+      </div>
+
       <div class="filters">
-        <input type="search" placeholder="Search stories" :value="q" @input="setQuery({ q: $event.target.value })" aria-label="Search" />
-        <select :value="author" @change="setQuery({ author: $event.target.value })" aria-label="Author">
-          <option value="">All writers</option>
-          <option v-for="a in usedAuthors" :key="a.key" :value="a.key">{{ a.name }}</option>
-        </select>
-        <select :value="category" @change="setQuery({ category: $event.target.value })" aria-label="Category">
-          <option value="">All categories</option>
-          <option v-for="c in usedCategories" :key="c.key" :value="c.key">{{ c.label }}</option>
-        </select>
-        <select :value="tag" @change="setQuery({ tag: $event.target.value })" aria-label="Tag">
-          <option value="">All topics</option>
-          <option v-for="t in allTags" :key="t" :value="t">{{ t }}</option>
-        </select>
+        <div class="search">
+          <Icon name="search" :size="18" />
+          <input type="search" placeholder="Search stories" :value="q" @input="setQuery({ q: $event.target.value })" aria-label="Search stories" enterkeyhint="search" />
+          <button v-if="q" class="search-clear" type="button" aria-label="Clear search" @click="setQuery({ q: '' })"><Icon name="close" :size="16" /></button>
+        </div>
       </div>
 
       <PostCard v-for="p in filtered" :key="p.slug" :post="p" />
       <p v-if="filtered.length === 0" class="empty">No stories match.</p>
+
+      <div v-if="!wide" class="rail-inline">
+        <ActivityCalendar />
+      </div>
+
+      <section class="browse">
+        <h3>Categories</h3>
+        <div class="chips">
+          <router-link v-for="c in usedCategories" :key="c.key" class="chip filled" :class="{ on: category === c.key }" :to="{ path: '/', query: { category: c.key } }">{{ c.label }}</router-link>
+        </div>
+        <h3>Topics</h3>
+        <div class="chips">
+          <router-link v-for="t in tagCounts" :key="t.tag" class="chip filled" :class="{ on: tag === t.tag }" :to="{ path: '/', query: { tag: t.tag } }">{{ t.tag }}</router-link>
+        </div>
+      </section>
     </div>
 
     <aside class="sidebar">
-      <section>
+      <section class="side-featured">
         <h3>Featured</h3>
         <router-link v-for="p in featuredPosts" :key="p.slug" class="side-post" :to="`/post/${p.slug}`">
-          <div class="who"><Avatar :name="p.author.name" size="s" />{{ p.author.name }} · {{ formatDate(p.date, false) }}</div>
+          <div class="who"><Avatar :author="p.author" size="s" />{{ p.author.name }} · {{ formatDate(p.date, false) }}</div>
           <div class="t">{{ p.title }}</div>
         </router-link>
-      </section>
-      <section v-if="latestReleases.length">
-        <h3>Latest releases <router-link class="see-all" to="/releases">See all</router-link></h3>
-        <router-link v-for="r in latestReleases" :key="r.slug" class="side-row" :to="`/releases/${r.slug}`">
-          <span class="pshort">{{ r.product.short }}</span>{{ r.version }}<span class="n">{{ formatDate(r.date, false) }}</span>
-        </router-link>
-      </section>
-      <section>
-        <h3>Categories</h3>
-        <router-link v-for="c in usedCategories" :key="c.key" class="side-row" :to="{ path: '/', query: { category: c.key } }">
-          {{ c.label }}<span class="n">{{ c.count }}</span>
-        </router-link>
-      </section>
-      <section>
-        <h3>Writers</h3>
-        <router-link v-for="a in usedAuthors" :key="a.key" class="side-row" :to="{ path: '/', query: { author: a.key } }">
-          <Avatar :name="a.name" size="s" />{{ a.name }}<span class="n">{{ a.count }}</span>
-        </router-link>
-      </section>
-      <section>
-        <h3>Topics</h3>
-        <div class="chips">
-          <router-link v-for="t in tagCounts" :key="t.tag" class="chip" :to="{ path: '/', query: { tag: t.tag } }">{{ t.tag }}</router-link>
-        </div>
       </section>
     </aside>
   </div>

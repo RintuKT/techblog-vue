@@ -1,65 +1,29 @@
-import yaml from 'js-yaml'
-import MarkdownIt from 'markdown-it'
+// Every content file is parsed at build time (scripts/vite-content.mjs), so nothing is parsed in the browser.
+// Lists need only each post's front matter, which is bundled; a post's body is its own small chunk,
+// fetched when the post is opened (or when a pointer reaches its card), so pages hold only what they show.
+const rawPosts = import.meta.glob('/content/posts/*.md', { query: '?meta', import: 'default', eager: true })
+const bodies = import.meta.glob('/content/posts/*.md', { query: '?html', import: 'default' })
+import authorsData from '/content/authors.yaml?content'
+import categoriesData from '/content/categories.yaml?content'
 
-// All markdown files under content/posts are bundled at build time.
-const rawPosts = import.meta.glob('/content/posts/*.md', {
-  query: '?raw',
-  import: 'default',
-  eager: true,
-})
-import authorsRaw from '/content/authors.yaml?raw'
-import categoriesRaw from '/content/categories.yaml?raw'
-
-export const authors = yaml.load(authorsRaw) || {}
-export const categories = yaml.load(categoriesRaw) || {}
-
-export const md = new MarkdownIt({ html: false, linkify: true, typographer: true })
-
-export function splitFrontMatter(text, path = '') {
-  const match = /^---\s*\n([\s\S]*?)\n---\s*\n?([\s\S]*)$/.exec(text)
-  if (!match) return { meta: {}, body: text }
-  try {
-    return { meta: yaml.load(match[1]) || {}, body: match[2] }
-  } catch (err) {
-    // A broken front matter should break one post, not the whole site.
-    console.error(`Front matter error in ${path}: ${err.message}`)
-    return { meta: { title: `Front matter error: ${path.split('/').pop()}`, draft: true }, body: match[2] }
-  }
-}
+export const authors = authorsData
+export const categories = categoriesData
 
 export function slugFromPath(path) {
   return path.split('/').pop().replace(/\.md$/, '')
 }
 
-export function toDateString(value) {
-  if (value instanceof Date) return value.toISOString().slice(0, 10)
-  return String(value || '')
-}
-
-function readingMinutes(body) {
-  const words = body.trim().split(/\s+/).filter(Boolean).length
-  return Math.max(1, Math.round(words / 220))
-}
-
-export function initials(name) {
-  return String(name || '?')
-    .split(/\s+/)
-    .map((w) => w[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
-}
+const readingMinutes = (words) => Math.max(1, Math.round(words / 220))
 
 export const posts = Object.entries(rawPosts)
-  .map(([path, text]) => {
-    const { meta, body } = splitFrontMatter(text, path)
+  .map(([path, { meta, words }]) => {
     const authorKey = meta.author || ''
     const author = authors[authorKey] || { name: authorKey || 'Unknown', role: '' }
     return {
       slug: meta.slug || slugFromPath(path),
       file: path.replace(/^\//, ''),
       title: meta.title || slugFromPath(path),
-      date: toDateString(meta.date),
+      date: String(meta.date || ''),
       authorKey,
       author,
       category: meta.category || '',
@@ -69,8 +33,8 @@ export const posts = Object.entries(rawPosts)
       cover: meta.cover ? String(meta.cover) : '',
       featured: meta.featured === true,
       draft: meta.draft === true,
-      minutes: readingMinutes(body),
-      html: md.render(body),
+      minutes: readingMinutes(words),
+      loadHtml: bodies[path],
     }
   })
   .filter((p) => !p.draft || import.meta.env.DEV)

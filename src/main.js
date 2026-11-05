@@ -18,11 +18,17 @@ const router = createRouter({
     { path: '/releases/:slug', component: ReleaseView, props: true },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
-  scrollBehavior: (to, from) => (to.path === from.path ? undefined : { top: 0 }),
+  // Back and forward return to where you were (a frame later, once a lazily loaded body is in);
+  // a new page starts at the top, and filters on the same page keep the scroll.
+  scrollBehavior: (to, from, saved) =>
+    saved ? new Promise((done) => requestAnimationFrame(() => done(saved))) : to.path === from.path ? undefined : { top: 0 },
 })
 
 router.afterEach((to) => {
   if (!to.path.startsWith('/post/') && !to.path.startsWith('/releases/')) document.title = 'Eduport Tech Blog'
 })
+
+// iOS only shows :active (the press squeeze) on pages that listen for touches.
+addEventListener('touchstart', () => {}, { passive: true })
 
 createApp(App).use(router).mount('#app')

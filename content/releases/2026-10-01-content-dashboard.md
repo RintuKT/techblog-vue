@@ -7,7 +7,7 @@ type: release
 author: tech-team
 summary: Content editors can upload a whole batch of recordings with a CSV manifest, and reviewers get a single queue instead of per-course lists.
 images:
-  - url: https://picsum.photos/seed/eduport-content-a/1600/1000
+  - url: https://picsum.photos/seed/eduport-content-a/1200/750
     caption: Bulk upload with manifest validation
 draft: false
 ---
