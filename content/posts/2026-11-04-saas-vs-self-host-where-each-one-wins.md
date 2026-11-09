@@ -1,6 +1,6 @@
 ---
 title: "SaaS vs self-host: where each one wins, and how we decide"
-date: 2026-11-04
+date: 2026-03-16
 author: tech-team
 category: insight
 tags: [infrastructure, cloud, cost, self-hosting, rds, video, decision-making]

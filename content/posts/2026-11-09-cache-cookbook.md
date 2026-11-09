@@ -1,6 +1,6 @@
 ---
 title: "Cache cookbook: a detailed recipe for caching"
-date: 2026-11-09
+date: 2026-05-01
 author: infra
 category: insight
 tags: [caching, redis, cdn, nginx, varnish, architecture, offline, performance]

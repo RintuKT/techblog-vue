@@ -1,6 +1,6 @@
 ---
 title: DB CPU per request fell 54.5% during the evening peak
-date: 2026-11-04
+date: 2026-02-01
 author: infra
 category: cost
 tags: [database, postgres, rds, connection-reuse, latency, production]
