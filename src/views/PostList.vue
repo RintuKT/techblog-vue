@@ -134,7 +134,7 @@ const filterLabel = computed(() => {
       <section class="side-featured">
         <h3>Featured</h3>
         <router-link v-for="p in featuredPosts" :key="p.slug" class="side-post" :to="`/post/${p.slug}`">
-          <div class="who"><Avatar :author="p.author" size="s" />{{ p.author.name }} · {{ formatDate(p.date, false) }}</div>
+          <div class="who"><Avatar :author="p.author" size="s" />{{ p.author.name }} · {{ formatDate(p.date) }}</div>
           <div class="t">{{ p.title }}</div>
         </router-link>
       </section>

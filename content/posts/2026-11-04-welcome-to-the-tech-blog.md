@@ -1,6 +1,6 @@
 ---
 title: Welcome to the Eduport Tech Blog
-date: 2026-11-04
+date: 2025-11-01
 author: tech-team
 category: insight
 tags: [meta, writing]

@@ -69,7 +69,7 @@ watch(post, async (p) => {
         <router-link v-for="r in related" :key="r.slug" class="more-item" :to="`/post/${r.slug}`" @pointerenter="r.loadHtml()">
           <img v-if="r.cover" class="thumb" :src="r.cover" alt="" loading="lazy" decoding="async" />
           <div class="t">{{ r.title }}</div>
-          <div class="m">{{ r.author.name }} · {{ formatDate(r.date, false) }} · {{ r.minutes }} min</div>
+          <div class="m">{{ r.author.name }} · {{ formatDate(r.date) }} · {{ r.minutes }} min</div>
         </router-link>
       </div>
     </section>

@@ -10,7 +10,7 @@ defineProps({ post: { type: Object, required: true } })
       <Avatar :author="post.author" size="s" />
       <router-link :to="{ path: '/', query: { author: post.authorKey } }"><b>{{ post.author.name }}</b></router-link>
       <span aria-hidden="true">·</span>
-      <time :datetime="post.date">{{ formatDate(post.date, false) }}</time>
+      <time :datetime="post.date">{{ formatDate(post.date) }}</time>
     </div>
     <div class="body">
       <div>
