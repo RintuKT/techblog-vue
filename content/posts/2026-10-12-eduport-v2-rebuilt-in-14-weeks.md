@@ -7,7 +7,7 @@ tags: [mobile, flutter, architecture, migration, production]
 summary: "Between July and November 2026 we rebuilt the Eduport learner app on a new codebase without changing what students see. Four weeks after release, 90% of our Android users were on it, and the share of users hit by a crash in a week fell from 1.08% to 0.30%."
 cover: /images/eduport-v2/cover.png
 featured: true
-draft: true
+draft: false
 ---
 
 *V2 reached Google Play on 12 October 2026. The figures in this post run to 7 November.*
