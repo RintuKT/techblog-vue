@@ -16,3 +16,10 @@ infra:
   color: '#2f6fed'
   role: Platform & Infrastructure
   email: tech@eduport.app
+
+mobile:
+  name: Mobile Engineering Team
+  badge: MOBILE
+  color: '#7a5af8'
+  role: Android & iOS apps
+  email: tech@eduport.app

@@ -14,6 +14,8 @@ export const SITE = {
 }
 
 const abs = (path) => SITE.url + (path === '/' ? '/' : path)
+// Share images must be absolute; a cover served from public/ is a site path.
+const absImage = (src) => (src && src.startsWith('/') ? abs(src) : src)
 const logo = () => abs('/apple-touch-icon.png')
 const publisher = () => ({ '@type': 'Organization', name: SITE.org.name, url: SITE.org.url, logo: { '@type': 'ImageObject', url: logo() } })
 const crumbs = (items) => ({
@@ -46,13 +48,13 @@ export function pageMeta(route) {
         title: `${p.title} · ${SITE.name}`,
         description: p.summary || SITE.description,
         type: 'article',
-        image: p.cover,
+        image: absImage(p.cover),
         published: p.date,
         author: p.author.name,
         jsonLd: [
           {
             '@type': 'BlogPosting', headline: p.title, description: p.summary, datePublished: p.date, dateModified: p.date,
-            image: p.cover || undefined, url: abs(path), mainEntityOfPage: abs(path), inLanguage: 'en',
+            image: absImage(p.cover) || undefined, url: abs(path), mainEntityOfPage: abs(path), inLanguage: 'en',
             author: { '@type': 'Organization', name: p.author.name, url: abs('/authors') },
             publisher: publisher(), isPartOf: { '@type': 'Blog', name: SITE.name, url: abs('/') },
             articleSection: p.categoryLabel || undefined, keywords: p.tags.join(', ') || undefined,

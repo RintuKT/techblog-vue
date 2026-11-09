@@ -40,7 +40,7 @@ const nPosts = check('posts', (f, m) => {
   for (const k of ['title', 'date', 'author', 'category', 'summary']) if (!m[k]) fail(f, `missing ${k}`)
   if (m.author && !authors[m.author]) fail(f, `unknown author "${m.author}" (add to content/authors.yaml)`)
   if (m.category && !categories[m.category]) fail(f, `unknown category "${m.category}"`)
-  if (m.cover && !/^https?:\/\//.test(String(m.cover))) fail(f, 'cover must be a remote URL')
+  if (m.cover && !/^(https?:\/\/|\/)/.test(String(m.cover))) fail(f, 'cover must be a remote URL or a path from public/')
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(m.date instanceof Date ? m.date.toISOString().slice(0, 10) : m.date))) fail(f, 'date must be YYYY-MM-DD')
 })
 const nReleases = check('releases', (f, m) => {
