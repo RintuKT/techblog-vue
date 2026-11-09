@@ -9,13 +9,13 @@ featured: false
 draft: false
 ---
 
-The cheapest request is the one that never reaches the database. The second cheapest is the one that never leaves the phone. Caching is how we get there, and it is also how we end up serving yesterday's price or someone else's account page. Both outcomes come from the same few decisions: **what** to cache, **where**, for **how long**, and **how to throw it away**.
+The cheapest request is the one that **never reaches the database**. The second cheapest is the one that **never leaves the phone**. Caching is how we get there, and it is also how we end up serving **yesterday's price** or **someone else's account page**. Both outcomes come from the same few decisions: **what** to cache, **where**, for **how long**, and **how to throw it away**.
 
 This post walks through every layer between a learner's phone and our Postgres primary, with working code for each, and closes with how the largest platforms structure theirs.
 
 ## A city, to keep the layers straight
 
-Think of data as groceries and the database as the farm.
+Think of data as **groceries** and the database as **the farm**.
 
 | In the city | In the system | Speed | Who shares it |
 |---|---|---|---|
@@ -30,62 +30,56 @@ The farm can only harvest so fast. Every shop in between exists so that most peo
 
 ## The full picture
 
-```text
- Phone / browser
- ├─ offline cache  (Service Worker, SQLite)  ~0 ms, offline
- └─ HTTP cache     (Cache-Control, ETag)     ~0 ms
-          │ miss
-          ▼
- CDN edge PoP      (Cloudflare, CloudFront)  5–40 ms away
-          │ miss
-          ▼
- Reverse proxy     (Nginx, Varnish)          <1 ms on the box
-          │ miss
-          ▼
- App server
- ├─ in-process cache (dict / Map, LRU)       microseconds
- │        │ miss
- │        ▼
- └─ cache server   (Redis, Memcached)        ~0.2–1 ms
-          │ miss
-          ▼
- Database          (Postgres on RDS)         1–50+ ms
+```flow
+phone | Phone or browser | **Offline cache** and **HTTP cache** on the device | ~0 ms
+-> miss
+edge | CDN edge PoP | Cloudflare, CloudFront or Akamai, near the user | 5–40 ms
+-> miss
+proxy | Reverse proxy | **Nginx** or **Varnish** in front of the app | <1 ms
+-> miss
+app | App server | **In-process cache**: a dict or Map with LRU | µs
+-> miss
+cache | Cache server | **Redis** or **Memcached**, shared by every server | ~0.5 ms
+-> miss
+db | Database | **Postgres on RDS**, the source of truth | 1–50+ ms
+caption: Latencies are typical orders of magnitude, not measurements of our stack.
 ```
 
-The latencies are typical orders of magnitude, not measurements of our stack. The shape matters more than the numbers: each layer down is slower, more shared, and more expensive to scale.
+The shape matters more than the numbers: each layer down is **slower**, **more shared**, and **more expensive to scale**.
 
-**Why hit ratio is the number to watch.** With a 0.5 ms cache in front of a 20 ms query, the average cost of a read is:
+**Why hit ratio is the number to watch.** Every read pays for the cache lookup, and every miss also pays for the query: `average = hit × cache + (1 − hit) × (cache + db)`. With a 0.5 ms cache in front of a 20 ms query:
 
-```text
-avg = hit × cache + (1 − hit) × (cache + db)
+| Hit ratio | Average read | Reads that reach the database |
+|---|---|---|
+| 80% | 4.5 ms | 20% |
+| 95% | 1.5 ms | 5% |
+| 99% | **0.7 ms** | **1%** |
 
-80% hits → 0.80 × 0.5 + 0.20 × 20.5 = 4.5 ms   DB gets 20%
-95% hits → 0.95 × 0.5 + 0.05 × 20.5 = 1.5 ms   DB gets  5%
-99% hits → 0.99 × 0.5 + 0.01 × 20.5 = 0.7 ms   DB gets  1%
-```
-
-Going from 95% to 99% looks small, but it cuts database reads by **five times**. That is why the last few percent of hit ratio are worth chasing.
+Going from 95% to 99% looks small, but it cuts database reads by **five times**. That is why the last few percent of **hit ratio** are worth chasing.
 
 ## The running example: a city lookup service
 
-Every code sample below caches the same thing: a small API that returns a city by ID.
+Every code sample below caches the same thing: a small API that returns a **city by ID**.
 
-```text
-GET /api/cities/42
-
-{ "id": 42, "name": "Kozhikode", "state": "Kerala",
-  "country": "IN", "timezone": "Asia/Kolkata" }
+```json GET /api/cities/42
+{
+  "id": 42,
+  "name": "Kozhikode",
+  "state": "Kerala",
+  "country": "IN",
+  "timezone": "Asia/Kolkata"
+}
 ```
 
-Cities change rarely, everyone sees the same answer, and the database query is cheap but not free. That makes it a good candidate for every layer at once.
+Cities **change rarely**, **everyone sees the same answer**, and the database query is cheap but not free. That makes it a good candidate for every layer at once.
 
 ## Layer 1: in-process cache
 
-The fastest cache is a dictionary inside the running process. No network, no serialisation. The trade-offs: each process has its own copy, memory is limited, and invalidating it across 24 Gunicorn workers is not practical. Use it for small, hot, slow-changing data with a short TTL.
+The fastest cache is a **dictionary inside the running process**. No network, no serialisation. The trade-offs: **each process has its own copy**, memory is limited, and invalidating it across 24 Gunicorn workers is not practical. Use it for **small, hot, slow-changing data** with a **short TTL**.
 
 **Python**: a small TTL + LRU cache.
 
-```python
+```python ttl_cache.py
 import time
 from collections import OrderedDict
 from typing import Any
@@ -132,7 +126,7 @@ For pure functions with no expiry, Python's built-in `functools.lru_cache` is en
 
 **TypeScript**: the same idea with a `Map`, which keeps insertion order and so works as an LRU.
 
-```ts
+```ts ttl-cache.ts
 type Entry<T> = { value: T; expiresAt: number };
 
 export class TTLCache<T> {
@@ -168,7 +162,7 @@ export class TTLCache<T> {
 
 ## Layer 2: cache server (Redis, Memcached)
 
-A cache server is shared by every app server, survives deploys, and can be invalidated in one place. This is where most application caching belongs.
+A cache server is **shared by every app server**, **survives deploys**, and can be **invalidated in one place**. This is where most application caching belongs.
 
 ### Redis vs Memcached vs the rest
 
@@ -181,29 +175,38 @@ A cache server is shared by every app server, survives deploys, and can be inval
 | Extras | TTL per key, atomic ops, Lua, pub/sub, leaderboards | Simple and very fast at plain get/set |
 | Pick it when | You want one tool for cache, counters, rate limits, queues, leaderboards | You want a huge, flat, simple cache and nothing else |
 
-Valkey is the Linux Foundation fork of Redis created in 2024 after Redis changed its licence; it is wire-compatible, and AWS ElastiCache and MemoryDB both support it. Dragonfly and KeyDB are other Redis-compatible servers aimed at multi-core throughput.
+**Valkey** is the Linux Foundation fork of Redis created in 2024 after Redis changed its licence; it is wire-compatible, and AWS ElastiCache and MemoryDB both support it. **Dragonfly** and **KeyDB** are other Redis-compatible servers aimed at multi-core throughput.
 
 ### Patterns for using a cache server
 
-```text
- Cache-aside (lazy loading)      Write-through
- app → cache: get                app → DB: write
-   hit  → return it              app → cache: set, same request
-   miss → read DB, set cache
-                                 Write-behind (write-back)
- Read-through                    app → cache: write
- app → cache: get                cache → DB: later, in batches
- cache loads from DB on a miss   fast, but can lose writes
+| Pattern | On a read | On a write | Use it for |
+|---|---|---|---|
+| **Cache-aside** | App checks the cache; on a miss it reads the DB and sets the key | App writes the DB, then **deletes** the key | The default for most reads |
+| **Read-through** | The cache, or a library in front of it, loads from the DB on a miss | Same as cache-aside | When a library or proxy owns loading |
+| **Write-through** | Served from the cache | App writes the DB **and** the cache in the same request | Data read right after it is written |
+| **Write-behind** | Served from the cache | App writes the cache; it flushes to the DB later, in batches | Counters and analytics. **Can lose writes** on a crash |
+| **Refresh-ahead** | Served from the cache | Hot keys are reloaded **before they expire** | A few hot keys that must never miss |
 
- Refresh-ahead
- reload hot keys before they expire
+**Cache-aside** is the default and the one to start with: **the app owns the logic**, a cache outage degrades to **slower reads rather than errors**, and only data that is actually read gets cached. Here is one cache-aside read for city 42:
+
+```flow
+phone | Learner's app | asks for `GET /api/cities/42`
+-> request
+app | App server | Django or Node runs `get_city(42)`
+-> GET city:v1:42
+cache | Redis | **miss**: the key is not there yet
+-> read on a miss
+db | Postgres | returns the row, the source of truth
+-> app sets city:v1:42 for 1 hour
+cache | Redis | now holds the city
+-> response
+phone | Learner's app | every later request is a **hit** in Redis
+caption: The database is read about once an hour per city, however many learners ask.
 ```
-
-**Cache-aside** is the default and the one to start with: the app owns the logic, a cache outage degrades to slower reads rather than errors, and only data that is actually read gets cached.
 
 **Python**: cache-aside with redis-py, including negative caching and TTL jitter.
 
-```python
+```python cities.py
 import json
 import random
 import redis
@@ -242,7 +245,7 @@ Two details matter here. **Delete after the write, rather than set the new value
 
 **Django**: the framework already does most of this.
 
-```python
+```python settings.py · services.py · views.py
 # settings.py  (Django 4.0+ ships a Redis backend)
 CACHES = {
     "default": {
@@ -273,7 +276,7 @@ def city_list(request):
 
 **TypeScript**: cache-aside with ioredis.
 
-```ts
+```ts cities.ts
 import Redis from "ioredis";
 
 type City = {
@@ -326,11 +329,11 @@ Rule of thumb: if Redis holds anything you cannot rebuild, it is not only a cach
 
 ## Layer 3: reverse proxy cache (Nginx, Varnish)
 
-A reverse proxy sits in front of the app servers and caches whole HTTP responses. A hit never wakes Python or Node at all. It is ideal for anonymous, identical-for-everyone responses: config endpoints, public lists, rendered pages.
+A reverse proxy sits in front of the app servers and caches **whole HTTP responses**. A hit **never wakes Python or Node** at all. It is ideal for anonymous, identical-for-everyone responses: config endpoints, public lists, rendered pages.
 
 **Nginx**: proxy cache with stale serving and stampede protection.
 
-```nginx
+```nginx /etc/nginx/conf.d/cities.conf
 # In the http { } block.
 # keys_zone: 50 MB of keys in shared memory.
 # max_size:  up to 2 GB of cached responses on disk.
@@ -371,11 +374,11 @@ server {
 }
 ```
 
-Nginx respects the upstream's `Cache-Control` and `Expires` headers ahead of `proxy_cache_valid`, and by default it does not cache responses that set a cookie. **Microcaching**, `proxy_cache_valid 200 1s`, is a cheap trick for busy endpoints: even a one-second cache turns a thousand identical requests per second into one.
+Nginx respects the upstream's `Cache-Control` and `Expires` headers ahead of `proxy_cache_valid`, and by default it **does not cache responses that set a cookie**. **Microcaching**, `proxy_cache_valid 200 1s`, is a cheap trick for busy endpoints: even a one-second cache turns a thousand identical requests per second into one.
 
 **Varnish**: a dedicated HTTP cache with its own configuration language (VCL). Its strengths are fine-grained control, grace mode, and fast purges.
 
-```vcl
+```vcl default.vcl
 vcl 4.1;
 
 backend app { .host = "127.0.0.1"; .port = "8000"; }
@@ -411,11 +414,11 @@ sub vcl_deliver {
 }
 ```
 
-Grace mode is the important line: if the backend is down, Varnish keeps serving the last good copy instead of an error page.
+**Grace mode** is the important line: if the backend is down, Varnish keeps serving the last good copy instead of an error page.
 
 ## Layer 4: HTTP caching and the CDN
 
-Browsers, apps, proxies and CDNs all obey the same contract: the `Cache-Control` header your server sends. Get the header right and every layer above the app works for free.
+Browsers, apps, proxies and CDNs all obey the same contract: the **`Cache-Control` header** your server sends. Get the header right and **every layer above the app works for free**.
 
 | Directive | Meaning |
 |---|---|
@@ -432,7 +435,7 @@ Browsers, apps, proxies and CDNs all obey the same contract: the `Cache-Control`
 
 **TypeScript (Express)**: the city endpoint with headers that let the CDN do the work.
 
-```ts
+```ts server.ts
 import express from "express";
 import { getCity } from "./cities";
 
@@ -468,23 +471,19 @@ app.get("/api/me", async (req, res) => {
 
 ### How a CDN is built
 
-```text
- User in Kochi
-      │ DNS / anycast
-      ▼
- Edge PoP, Kochi or Chennai      hundreds worldwide
-      │ miss
-      ▼
- Regional / upper-tier cache     tens
-      │ miss
-      ▼
- Origin shield, one region       one
-      │ miss
-      ▼
- Origin: S3 bucket or Nginx      ours
+```flow
+user | Learner in Kochi | **DNS** or **anycast** picks the nearest PoP
+-> request
+edge | Edge PoP | Kochi or Chennai, one of **hundreds** | 5–40 ms
+-> miss
+region | Regional cache | one of **tens**, in large data centers
+-> miss
+shield | Origin shield | the **one** tier allowed to call the origin
+-> miss
+origin | Origin | our S3 bucket or Nginx
 ```
 
-Each tier exists to protect the one below it. Without the middle tiers, a new file requested once at every edge would hit the origin hundreds of times. With an origin shield, the origin sees it once.
+Each tier exists to **protect the one below it**. Without the middle tiers, a new file requested once at every edge would hit the origin hundreds of times. With an origin shield, **the origin sees it once**.
 
 - **Cloudflare** routes users with **anycast**: the same IP address is announced from every data center, so the network itself delivers the user to the nearest one. **Tiered Cache** makes a few upper-tier data centers fetch from the origin on behalf of all the others, and **Cache Reserve** keeps long-tail objects in R2 object storage so they are not evicted. In 2022 Cloudflare replaced Nginx in its proxy layer with **Pingora**, its own Rust proxy.
 - **Akamai** takes the opposite approach to placement: a very large number of servers deployed deep inside ISP networks, with a **DNS-based mapping system** that picks a nearby, healthy edge server for each user, and a **tiered distribution** layer of parent caches between edges and origin.
@@ -513,23 +512,27 @@ The last layer is on the learner's phone. Its job is different from the others: 
 
 The common strategies:
 
-```text
- Cache first               app shell, fonts, versioned files
-   hit  → use it
-   miss → network
+| Strategy | How it works | Use it for |
+|---|---|---|
+| **Cache first** | Serve from the cache; go to the network only on a miss | App shell, fonts, versioned files |
+| **Network first** | Try the network and update the cache; **fall back to the cache** when offline | Schedules, profiles, anything that must be fresh when online |
+| **Stale-while-revalidate** | Serve the cached copy **now**, fetch a fresh one in the background for next time | Feeds, lists, config |
 
- Network first             schedules, profiles, fresh data
-   network ok   → use it, update the cache
-   network fail → use the cache
+What a learner on a train sees when the app is **network first**:
 
- Stale-while-revalidate    feeds, lists, config
-   return the cached copy now
-   fetch from network in the background, update the cache
+```flow
+phone | Learner on a train, no signal | opens the class schedule
+-> fetch fails
+offline | Offline cache | Service Worker on the web, SQLite in the app
+-> cache hit
+storage | Saved copy | the schedule from the last time they were online
+-> rendered
+phone | Learner | sees yesterday's schedule, marked **offline**
 ```
 
 **TypeScript**: a Service Worker for the city app.
 
-```ts
+```ts sw.ts
 /// <reference lib="webworker" />
 declare const self: ServiceWorkerGlobalScope;
 
@@ -590,7 +593,7 @@ self.addEventListener("fetch", (event) => {
 
 **Python, on the client side**: the same network-first idea for a script or CLI that calls the API, using a local SQLite file.
 
-```python
+```python offline_client.py
 import json
 import sqlite3
 import time
@@ -640,9 +643,21 @@ On mobile, the hard part is not storing data but **sync**: what happens to a wri
 | **Leaked data** | A personalised response is stored in a shared cache | `Cache-Control: private` or `no-store`; never cache responses that depend on auth unless auth is in the key |
 | **Cold start** | A new cache node or a flush sends everything to the DB | Warm hot keys before switching traffic; add capacity gradually |
 
-**Python**: stampede protection with a Redis lock, so only one request rebuilds an expired key.
+**Stampede protection** in one picture: a lock lets **one** request rebuild an expired key while the rest wait for it.
 
-```python
+```flow
+user | 1,000 requests | all ask for city 42 the moment its key expires
+-> GET city:v1:42 misses for everyone
+cache | Redis lock | `SET lock NX`: exactly **one** request wins
+-> the winner reads; the rest wait 50 ms and retry
+db | Postgres | **one** query instead of 1,000
+-> winner sets city:v1:42
+cache | Redis | the waiting requests now get a **hit**
+```
+
+**Python**: the same lock in code.
+
+```python stampede.py
 import json
 import time
 import uuid
@@ -689,7 +704,7 @@ The token matters: if the rebuild takes longer than the lock's 10-second expiry,
 
 **TypeScript**: single-flight inside one process, so concurrent requests for the same key share one database call.
 
-```ts
+```ts single-flight.ts
 const inflight = new Map<string, Promise<City | null>>();
 // Keep hot keys in this process for 5 seconds
 const local = new TTLCache<City | null>(5_000);
@@ -742,15 +757,17 @@ These summaries come from the companies' own papers and engineering posts.
 
 Facebook's 2013 NSDI paper *Scaling Memcache at Facebook* describes a cache-aside memcached tier in front of MySQL serving **more than a billion requests per second** and storing **trillions of items**.
 
-```text
- Web server ──get──► mcrouter ──► memcache
-     │  on a miss: read MySQL, then set the key
-     │  on a write: update MySQL
-     ▼
-   MySQL ──commit log──► mcsqueal
-                            │ delete the changed keys
-                            ▼
-             memcache in every cluster of the region
+```flow
+app | Web server | gets go through **mcrouter**
+-> get
+cache | memcache | a hit returns at once
+-> on a miss: read MySQL, then set the key
+db | MySQL | every write lands here first
+~> commit log
+worker | mcsqueal | a daemon tailing the log
+~> delete the changed keys
+cache | memcache in every cluster | the next read loads the fresh value
+caption: Dashed arrows run in the background, after the write has committed.
 ```
 
 - **Leases** solve two problems at once. On a miss, memcache hands one client a lease token to refill the key; others wait briefly or get a slightly stale value. That stops stampedes and stops a slow client from writing an outdated value after a newer delete.
@@ -787,9 +804,9 @@ Covered in the CDN section above. The three represent three placement strategies
 
 ## Real incidents worth remembering
 
-- **Steam, 25 December 2015.** During a traffic attack, a caching configuration change caused pages generated for logged-in users to be cached and served to other users. Valve reported that about 34,000 users had personal information exposed this way. Lesson: personalised responses must be `private` or `no-store`, and every cache configuration change needs a test that logged-in pages are never shared.
-- **Facebook, 23 September 2010.** An invalid configuration value caused every client that saw it to query the database to fix it, at the same time, and the resulting feedback loop took the site down for about two and a half hours. Lesson: this is a stampede. Fallback paths need rate limits and backoff, not just retries.
-- **Fastly, 8 June 2021.** A single customer's valid configuration change triggered a latent bug that made most of Fastly's network return errors for under an hour, taking many large sites with it. Lesson: a CDN is a dependency like any other. Know what your site does when the edge is down, and keep the origin able to take some direct traffic.
+- **Steam, 25 December 2015.** During a traffic attack, a caching configuration change caused pages generated for logged-in users to be cached and served to other users. Valve reported that about 34,000 users had personal information exposed this way. **Lesson:** personalised responses must be `private` or `no-store`, and every cache configuration change needs a test that logged-in pages are never shared.
+- **Facebook, 23 September 2010.** An invalid configuration value caused every client that saw it to query the database to fix it, at the same time, and the resulting feedback loop took the site down for about two and a half hours. **Lesson:** this is a stampede. Fallback paths need rate limits and backoff, not just retries.
+- **Fastly, 8 June 2021.** A single customer's valid configuration change triggered a latent bug that made most of Fastly's network return errors for under an hour, taking many large sites with it. **Lesson:** a CDN is a dependency like any other. Know what your site does when the edge is down, and keep the origin able to take some direct traffic.
 
 ## A checklist before adding a cache
 

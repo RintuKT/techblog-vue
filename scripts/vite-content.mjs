@@ -4,6 +4,8 @@
 //   '/content/x.yaml?content'   -> the parsed object
 import yaml from 'js-yaml'
 import MarkdownIt from 'markdown-it'
+import { loadHighlighter, renderCode } from './markdown/code.mjs'
+import { renderFlow } from './markdown/flow.mjs'
 
 const md = new MarkdownIt({ html: false, linkify: true, typographer: true })
 
@@ -14,6 +16,12 @@ md.renderer.rules.table_open = (tokens, idx) => {
   return `<div class="table-wrap"><table style="--cols: ${cols}">\n`
 }
 md.renderer.rules.table_close = () => '</table></div>\n'
+// ```flow draws an icon diagram; every other fence is coloured code (see scripts/markdown/).
+md.renderer.rules.fence = (tokens, idx, options, env) => {
+  const { content, info } = tokens[idx]
+  if (info.trim().split(/\s+/)[0] === 'flow') return renderFlow(content, md, env?.file)
+  return renderCode(content, info)
+}
 const image = md.renderer.rules.image
 md.renderer.rules.image = (tokens, idx, options, env, self) => {
   tokens[idx].attrSet('loading', 'lazy')
@@ -38,13 +46,16 @@ const asModule = (data) => ({ code: `export default ${JSON.stringify(data)}`, ma
 export default function content() {
   return {
     name: 'eduport-content',
-    transform(code, id) {
+    async transform(code, id) {
       const [file, query = ''] = id.split('?')
       const params = new URLSearchParams(query)
       if (/\.ya?ml$/.test(file) && params.has('content')) return asModule(yaml.load(code) || {})
       if (!file.endsWith('.md') || !(params.has('meta') || params.has('html'))) return
       const { meta, body } = splitFrontMatter(code, file)
-      if (params.has('html')) return asModule(md.render(body))
+      if (params.has('html')) {
+        await loadHighlighter()
+        return asModule(md.render(body, { file }))
+      }
       if (meta.date instanceof Date) meta.date = meta.date.toISOString().slice(0, 10)
       return asModule({ meta, words: body.trim().split(/\s+/).filter(Boolean).length })
     },
