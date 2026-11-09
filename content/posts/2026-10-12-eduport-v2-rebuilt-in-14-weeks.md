@@ -1,6 +1,6 @@
 ---
 title: "Eduport V2: rebuilt in 14 weeks, crash rate down 72%"
-date: 2025-12-16
+date: 2026-10-12
 author: mobile
 category: achievement
 tags: [mobile, flutter, architecture, migration, production]
