@@ -1,5 +1,5 @@
 ---
-title: "Caching from the phone to the database: every layer, when it helps, and how the big platforms do it"
+title: "Cache cookbook: a detailed recipe for caching"
 date: 2026-11-09
 author: infra
 category: insight
