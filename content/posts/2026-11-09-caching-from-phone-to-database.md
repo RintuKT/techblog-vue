@@ -5,6 +5,7 @@ author: infra
 category: insight
 tags: [caching, redis, cdn, nginx, varnish, architecture, offline, performance]
 summary: "A request can be answered from six different caches before it reaches the database. This is a field guide to each layer, with a city analogy, Python and TypeScript code for a small city-lookup service, Nginx and Varnish configs, the failure modes that bite, and how Facebook, Instagram, YouTube, Netflix, Pinterest, Cloudflare, Akamai and CloudFront build theirs."
+cover: https://assets.eduport.app/techblog/Cache%20(2).png
 featured: false
 draft: false
 ---
