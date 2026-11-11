@@ -5,6 +5,7 @@ author: rintu
 category: insight
 tags: [ai, agile, project-management, workflows, delivery]
 summary: "How AI is transforming Agile project management, SDLC operations, sprint analytics, technical documentation, engineering workflows, and delivery management."
+cover: /images/project-management-ai/cover.jpg
 featured: true
 draft: false
 ---
