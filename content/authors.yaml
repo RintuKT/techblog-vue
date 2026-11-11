@@ -23,3 +23,10 @@ mobile:
   color: '#7a5af8'
   role: Android & iOS apps
   email: tech@eduport.app
+
+rintu:
+  name: Rintu
+  badge: PM
+  color: '#10b981'
+  role: Project Manager & Scrum Master
+  email: rintu@eduport.app

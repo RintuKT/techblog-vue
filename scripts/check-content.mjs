@@ -2,9 +2,10 @@
 // Runs before every build (npm run build) and can be run alone: npm run check
 import fs from 'node:fs'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import yaml from 'js-yaml'
 
-const root = path.resolve(new URL('..', import.meta.url).pathname)
+const root = path.resolve(fileURLToPath(new URL('..', import.meta.url)))
 const load = (f) => yaml.load(fs.readFileSync(path.join(root, 'content', f), 'utf8')) || {}
 const authors = load('authors.yaml')
 const categories = load('categories.yaml')
